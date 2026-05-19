@@ -48,11 +48,19 @@ This project analyzes 4 years of sales data from the Superstore dataset (2014–
 ## 🔧 Technical Approach
 
 ### Data Model
+
 ```
-superstore.orders
-    └── vw_mrr          -- monthly revenue, orders, customers and margin
-    └── vw_churn        -- yearly retention and churn rates
-    └── vw_segments     -- revenue and profit by segment, region and YoY growth
+Kaggle Superstore CSV
+        │
+        ▼
+BigQuery: superstore.orders   ← raw table (~10K rows)
+        │
+        ├── vw_mrr        ← monthly revenue, orders, customers, margin
+        ├── vw_churn      ← yearly retention and churn rates (cohort self-join)
+        └── vw_segments   ← revenue and profit by segment, region, YoY growth
+                │
+                ▼
+        Power BI Desktop (4 pages: Home · MRR · Churn · Segments)
 ```
 
 ### SQL Queries
@@ -60,8 +68,15 @@ superstore.orders
 | Query | Description |
 |---|---|
 | [`01_mrr.sql`](./sql/01_mrr.sql) | Monthly revenue, active customers and profit margin |
-| [`02_churn.sql`](./sql/02_churn.sql) | Yearly customer retention and churn rate |
+| [`02_churn.sql`](./sql/02_churn.sql) | Yearly customer retention and churn rate (cohort self-join) |
 | [`03_nrr_segments.sql`](./sql/03_nrr_segments.sql) | Revenue by segment and region with YoY growth |
+
+### Power BI Implementation
+
+| Document | Description |
+|---|---|
+| [`powerbi/measures.md`](./powerbi/measures.md) | DAX measures with rationale, and all visual field mappings per page |
+| [`powerbi/data_model.md`](./powerbi/data_model.md) | View schemas, Power Query transformations, and custom visuals used |
 
 ---
 
@@ -78,23 +93,26 @@ superstore.orders
 ## 📊 Dashboard
 
 **Tool:** Power BI Desktop
-**File:** [Download .pbix](./dashboard/superstore-financial-kpis.pbix)
+**File:** [Download .pbix](./superstore-financial-kpis.pbix)
 
-The dashboard includes 4 pages with full navigation:
+The dashboard includes 4 navigable pages:
 
-| Page | Content |
+| Page | Description |
 |---|---|
-![Home](./assets/Home.png)
-![MRR](./assets/MRR.png)
-![Churn](./assets/Churn.png)
-![Segments](./assets/Segments.png)
+| **Home** | Summary view with navigation buttons |
+| **MRR** | Monthly revenue trend, active customers, profit margin over time |
+| **Churn** | Yearly retention vs churn (2014–2016), cohort area chart, retained vs churned customers |
+| **Segments** | Revenue and profit by segment (Consumer/Corporate/Home Office) and region |
 
-**Dashboard previews:**
+**Previews:**
 
-![Home](./assets/dashboard_home.png)
-![MRR](./assets/dashboard_mrr.png)
-![Churn](./assets/dashboard_churn.png)
-![Segments](./assets/dashboard_segments.png)
+| Home | MRR |
+|---|---|
+| ![Home](./assets/Home.png) | ![MRR](./assets/MRR.png) |
+
+| Churn | Segments |
+|---|---|
+| ![Churn](./assets/Churn.png) | ![Segments](./assets/Segments.png) |
 
 ---
 
@@ -104,19 +122,21 @@ The dashboard includes 4 pages with full navigation:
 saas-financial-kpis/
 │
 ├── sql/
-│   ├── 01_mrr.sql
-│   ├── 02_churn.sql
-│   └── 03_nrr_segments.sql
+│   ├── 01_mrr.sql                  ← MRR and margin by month
+│   ├── 02_churn.sql                ← Retention/churn cohort (self-join)
+│   └── 03_nrr_segments.sql         ← Segment revenue with YoY growth
 │
-├── dashboard/
-│   └── superstore-financial-kpis.pbix
+├── powerbi/
+│   ├── measures.md                 ← DAX measures + visual field mappings
+│   └── data_model.md               ← View schemas, Power Query, custom visuals
 │
 ├── assets/
-│   ├── dashboard_home.png
-│   ├── dashboard_mrr.png
-│   ├── dashboard_churn.png
-│   └── dashboard_segments.png
+│   ├── Home.png
+│   ├── MRR.png
+│   ├── Churn.png
+│   └── Segments.png
 │
+├── superstore-financial-kpis.pbix  ← Power BI file (open in Power BI Desktop)
 └── README.md
 ```
 
@@ -133,6 +153,6 @@ saas-financial-kpis/
 
 ## 👩‍💻 About
 
-Built by **Ana Paula Borges** · [LinkedIn](https://linkedin.com/in/ANAPBORGES) · [GitHub](https://github.com/ANAPBORGES)
+Built by **Ana Paula Borges** · [LinkedIn](https://linkedin.com/in/ana-paula-d-araújo-borges) · [GitHub](https://github.com/ANAPBORGES)
 
 *Senior Data Analyst & Team Leader with 10+ years in BI, DataViz, and Marketing Analytics.*
