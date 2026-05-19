@@ -84,10 +84,10 @@ The dashboard includes 4 pages with full navigation:
 
 | Page | Content |
 |---|---|
-| **Home** | Navigation hub with page buttons |
-| **MRR** | Monthly revenue trends, revenue by year, MRR vs profit, active customers, margin % |
-| **Churn** | Retention vs churn by year, retention rate trend, churn rate, total customers |
-| **Segments** | Revenue and profit by segment and region, YoY growth by segment |
+![Home](./assets/Home.png)
+![MRR](./assets/MRR.png)
+![Churn](./assets/Churn.png)
+![Segments](./assets/Segments.png)
 
 **Dashboard previews:**
 
