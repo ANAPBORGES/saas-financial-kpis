@@ -1,15 +1,106 @@
 # DAX Measures
 
-This document describes the calculated measures created in Power BI for the SaaS Financial KPIs dashboard.
+This document describes all calculated measures in the Power BI model for the SaaS Financial KPIs dashboard.
 
-The data model connects directly to three BigQuery views (`vw_mrr`, `vw_churn`, `vw_segments`). Most KPI cards use implicit aggregations (`SUM`, `AVERAGE`, `COUNTROWS`) on the view columns. Two explicit DAX measures were created to handle a specific analytical constraint in the churn calculation.
+---
+
+## Core Measures
+
+### Total Revenue
+```dax
+Total Revenue = SUM(vw_mrr[mrr])
+```
+
+### Total Profit
+```dax
+Total Profit = SUM(vw_mrr[total_profit])
+```
+
+### Profit Margin %
+```dax
+Profit Margin % =
+DIVIDE([Total Profit], [Total Revenue], 0)
+```
+
+### Active Customers
+```dax
+Active Customers = SUM(vw_mrr[active_customers])
+```
+
+### Total Orders
+```dax
+Total Orders = SUM(vw_mrr[total_orders])
+```
+
+---
+
+## Time Intelligence Measures
+
+### Revenue YoY %
+Compares current year revenue to the same period last year.
+```dax
+Revenue YoY % =
+VAR CurrentRevenue = [Total Revenue]
+VAR PriorRevenue =
+    CALCULATE(
+        [Total Revenue],
+        SAMEPERIODLASTYEAR(vw_mrr[year_month])
+    )
+RETURN
+    DIVIDE(CurrentRevenue - PriorRevenue, PriorRevenue, BLANK())
+```
+
+### Revenue MoM %
+Month-over-month growth using LAG equivalent in DAX.
+```dax
+Revenue MoM % =
+VAR CurrentRevenue = [Total Revenue]
+VAR PriorRevenue =
+    CALCULATE(
+        [Total Revenue],
+        DATEADD(vw_mrr[year_month], -1, MONTH)
+    )
+RETURN
+    DIVIDE(CurrentRevenue - PriorRevenue, PriorRevenue, BLANK())
+```
+
+### Rolling 3M Avg Revenue
+3-month rolling average to smooth seasonality and reveal the underlying trend.
+```dax
+Rolling 3M Avg Revenue =
+AVERAGEX(
+    DATESINPERIOD(
+        vw_mrr[year_month],
+        LASTDATE(vw_mrr[year_month]),
+        -3,
+        MONTH
+    ),
+    [Total Revenue]
+)
+```
+
+### YTD Revenue
+Cumulative revenue from the start of the year to the current period.
+```dax
+YTD Revenue =
+TOTALYTD([Total Revenue], vw_mrr[year_month])
+```
+
+### YTD Revenue Prior Year
+```dax
+YTD Revenue Prior Year =
+CALCULATE(
+    [YTD Revenue],
+    SAMEPERIODLASTYEAR(vw_mrr[year_month])
+)
+```
 
 ---
 
 ## Churn & Retention Measures
 
 ### Avg Churn (excl 2017)
-
+Excludes 2017 because the dataset ends in December 2017 — customers from that year have no following year to "return in", artificially inflating churn to 100%.
 ```dax
 Avg Churn (excl 2017) =
 CALCULATE(
@@ -18,13 +109,7 @@ CALCULATE(
 )
 ```
 
-**Why exclude 2017?**
-The churn calculation requires knowing whether a customer who bought in year N returned in year N+1. Since the dataset ends in December 2017, there is no 2018 data — every customer from 2017 would appear as "churned" simply because the observation window closes. Including 2017 would artificially inflate the churn rate by 100% for that cohort. Excluding it ensures the metric reflects real behavioral churn rather than a data boundary artifact.
-
----
-
 ### Avg Retention (excl 2017)
-
 ```dax
 Avg Retention (excl 2017) =
 CALCULATE(
@@ -33,49 +118,94 @@ CALCULATE(
 )
 ```
 
-Same rationale as above — retention is the complement of churn (retention + churn = 100%), so the same exclusion applies.
+### Churn Trend
+Compares current year churn to prior year to show if churn is improving or worsening.
+```dax
+Churn Trend =
+VAR CurrentChurn =
+    CALCULATE(AVERAGE(vw_churn[churn_rate_pct]), vw_churn[order_year] <> 2017)
+VAR PriorChurn =
+    CALCULATE(
+        AVERAGE(vw_churn[churn_rate_pct]),
+        FILTER(vw_churn, vw_churn[order_year] = MAX(vw_churn[order_year]) - 1)
+    )
+RETURN
+    DIVIDE(CurrentChurn - PriorChurn, PriorChurn, BLANK())
+```
 
 ---
 
-## Implicit Aggregations by Page
+## Segment & Profitability Measures
 
-These are not explicit measures but direct column aggregations used in each visual.
+### Revenue by Segment %
+Share of total revenue attributed to the selected segment.
+```dax
+Revenue by Segment % =
+DIVIDE(
+    [Total Revenue],
+    CALCULATE([Total Revenue], ALL(vw_segments[Segment])),
+    0
+)
+```
 
-### MRR Page
+### Profit per Order
+Average profit generated per order — efficiency metric.
+```dax
+Profit per Order =
+DIVIDE([Total Profit], [Total Orders], 0)
+```
 
-| Visual | Field | Aggregation |
+### Revenue Rank (Segment)
+Dynamic ranking of segments by revenue — updates with any filter applied.
+```dax
+Revenue Rank (Segment) =
+RANKX(
+    ALL(vw_segments[Segment]),
+    [Total Revenue],
+    ,
+    DESC,
+    DENSE
+)
+```
+
+---
+
+## Visual Field Mappings
+
+### Page: MRR
+
+| Visual | Measure / Field | Aggregation |
 |---|---|---|
-| KPI Card | `vw_mrr.mrr` | SUM |
-| KPI Card | `vw_mrr.active_customers` | SUM |
-| KPI Card | `vw_mrr.total_orders` | SUM |
-| KPI Card | `vw_mrr.profit_margin_pct` | SUM |
-| Line chart (trend) | `vw_mrr.mrr` | SUM by `year_month` |
-| Line chart (dual axis) | `vw_mrr.mrr`, `vw_mrr.total_profit` | SUM by `year_month` |
-| Line chart | `vw_mrr.active_customers` | SUM by `year_month` |
-| Line chart | `vw_mrr.profit_margin_pct` | SUM by `year_month` |
-| Column chart | `vw_mrr.mrr` | SUM by `Year` |
+| KPI Card — MRR | `Total Revenue` | DAX |
+| KPI Card — Active Customers | `Active Customers` | DAX |
+| KPI Card — Total Orders | `Total Orders` | DAX |
+| KPI Card — Profit Margin | `Profit Margin %` | DAX |
+| Line chart (monthly) | `Total Revenue`, `Rolling 3M Avg Revenue` | DAX by `year_month` |
+| Column chart (annual) | `Total Revenue` | DAX by `Year` |
+| Line chart (customers) | `Active Customers` | SUM by `year_month` |
+| Line chart (margin) | `Profit Margin %` | DAX by `year_month` |
 
-### Churn Page
+### Page: Churn
 
-| Visual | Field | Aggregation |
+| Visual | Measure / Field | Aggregation |
 |---|---|---|
-| KPI Card | `Avg Churn (excl 2017)` | DAX measure |
-| KPI Card | `Avg Retention (excl 2017)` | DAX measure |
-| KPI Card | `vw_churn.total_customers` | COUNTNONNULL |
-| Line chart | `vw_churn.retention_rate_pct` | COUNTNONNULL by `order_year` |
-| Donut chart | `Avg Churn`, `Avg Retention` | DAX measures |
-| Area chart | `vw_churn.total_customers` | SUM by `order_year` |
-| Clustered Column | `vw_churn.retained_customers`, `vw_churn.churned_customers` | SUM by `order_year` |
+| KPI Card — Avg Churn | `Avg Churn (excl 2017)` | DAX |
+| KPI Card — Avg Retention | `Avg Retention (excl 2017)` | DAX |
+| KPI Card — Total Customers | `vw_churn[total_customers]` | COUNTNONNULL |
+| Line chart | `vw_churn[retention_rate_pct]` | COUNTNONNULL by `order_year` |
+| Donut chart | `Avg Churn`, `Avg Retention` | DAX |
+| Area chart | `vw_churn[total_customers]` | SUM by `order_year` |
+| Clustered Column | `retained_customers`, `churned_customers` | SUM by `order_year` |
 
-### Segments Page
+### Page: Segments
 
-| Visual | Field | Aggregation |
+| Visual | Measure / Field | Aggregation |
 |---|---|---|
-| KPI Card | `vw_segments.total_revenue` | SUM |
-| KPI Card | `vw_segments.total_profit` | SUM |
-| KPI Card | `vw_mrr.profit_margin_pct` | SUM |
-| KPI Card | `vw_mrr.total_orders` | SUM |
-| Clustered Bar | `vw_segments.total_revenue` | SUM by `Region` |
-| Clustered Column | `vw_segments.total_revenue` | SUM by `order_year`, series `Segment` |
-| Donut chart | `vw_segments.total_profit` | SUM by `Segment` |
-| Clustered Bar | `vw_segments.total_revenue` | SUM by `Segment` |
+| KPI Card — Revenue | `Total Revenue` | DAX |
+| KPI Card — Profit | `vw_segments[total_profit]` | SUM |
+| KPI Card — Profit Margin | `Profit Margin %` | DAX |
+| KPI Card — Total Orders | `Total Orders` | DAX |
+| Clustered Bar | `vw_segments[total_revenue]` | SUM by `Region` |
+| Clustered Column | `vw_segments[total_revenue]` | SUM by `order_year`, series `Segment` |
+| Donut | `vw_segments[total_profit]` | SUM by `Segment` |
+| Clustered Bar | `vw_segments[total_revenue]` | SUM by `Segment` |
