@@ -2,6 +2,7 @@
 > End-to-end financial analysis of a retail dataset applying SaaS metrics — MRR, churn, retention, customer value, discount impact, and segment performance.
 
 [![SQL](https://img.shields.io/badge/SQL-BigQuery-4285F4?style=flat&logo=google-cloud)](https://cloud.google.com/bigquery)
+[![BigQuery](https://img.shields.io/badge/Dataset-BigQuery%20Public-4285F4?style=flat&logo=google-cloud)](https://console.cloud.google.com/bigquery?project=analytics-portfolio-496419&ws=!1m5!1m4!3m2!1sanalytics-portfolio-496419!2ssuperstore!23sTREE_NODE_SELECTION)
 [![Dashboard](https://img.shields.io/badge/Dashboard-Power%20BI-F2C811?style=flat&logo=powerbi)](./superstore-financial-kpis.pbix)
 [![Status](https://img.shields.io/badge/Status-Complete-success?style=flat)]()
 
@@ -105,6 +106,7 @@ BigQuery: analytics-portfolio-496419.superstore.orders   ← raw table (~10K row
 
 **Tool:** Power BI Desktop
 **File:** [Download .pbix](./superstore-financial-kpis.pbix)
+**BigQuery:** [View public dataset](https://console.cloud.google.com/bigquery?project=analytics-portfolio-496419&ws=!1m5!1m4!3m2!1sanalytics-portfolio-496419!2ssuperstore!23sTREE_NODE_SELECTION)
 
 | Page | Description |
 |---|---|
