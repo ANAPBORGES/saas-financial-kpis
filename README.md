@@ -105,12 +105,12 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 
 > **Why there is no live link:** `.pbix` is a binary Power BI format — GitHub cannot render it, and a public interactive embed requires *Publish to web* on the Power BI **Service**, which Microsoft gates behind a work/school account. The file below is the real report: download it and every slicer, cross-filter, and drill-through works. For fully interactive dashboards you can click in the browser, see the [Tableau](https://github.com/ANAPBORGES/tableau-sales-profitability-dashboard) and Looker Studio projects.
 
-| Page | Description | Interactions |
-|---|---|---|
-| **Home** | Summary navigation with key metrics | Page navigation buttons, KPI cards |
-| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution | Year slicer, cross-filter chart→KPI |
-| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown | Segment slicer, tooltip detail |
-| **Segments** | Revenue and profit by segment and region · YoY growth comparison | Region drill-down, cross-highlight |
+| Page | Description |
+|---|---|
+| **Home** | Summary navigation with key metrics |
+| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution |
+| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown |
+| **Segments** | Revenue and profit by segment and region · YoY growth comparison |
 
 **Previews:**
 
