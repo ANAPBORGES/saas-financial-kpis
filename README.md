@@ -1,7 +1,7 @@
 # SaaS Financial KPIs 💰
 > Financial analysis of a retail dataset applying SaaS-style metrics — MRR, churn & retention, customer value, discount impact, and segment performance — delivered as a **Power BI dashboard with DAX**, backed by BigQuery SQL. The data ships **inside this repo** (`data/superstore.csv`), so it is reproducible with no external setup.
 
-[![Power BI](https://img.shields.io/badge/Power%20BI-DAX%20·%20Power%20Query-F2C811?style=flat&logo=powerbi&logoColor=black)](./superstore-financial-kpis.pbix)
+[![Power BI](https://img.shields.io/badge/Power%20BI-Download%20.pbix-F2C811?style=flat&logo=powerbi&logoColor=black)](https://github.com/ANAPBORGES/saas-financial-kpis/raw/main/superstore-financial-kpis.pbix)
 [![SQL](https://img.shields.io/badge/SQL-BigQuery%20(8%20queries)-4285F4?style=flat&logo=google-cloud)](./sql)
 [![Data](https://img.shields.io/badge/Data-included%20in%20repo-34A853?style=flat)](./data/superstore.csv)
 [![Status](https://img.shields.io/badge/Status-Complete-success?style=flat)]()
@@ -99,14 +99,18 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 
 ## 📊 Dashboard
 
-**Tool:** Power BI Desktop · **File:** [`superstore-financial-kpis.pbix`](./superstore-financial-kpis.pbix)
+**Tool:** Power BI Desktop · 4 pages · DAX time-intelligence · Power Query (M)
 
-| Page | Description |
-|---|---|
-| **Home** | Summary navigation with key metrics |
-| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution |
-| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown |
-| **Segments** | Revenue and profit by segment and region · YoY growth comparison |
+⬇️ **[Download the report (`.pbix`, 3 MB)](https://github.com/ANAPBORGES/saas-financial-kpis/raw/main/superstore-financial-kpis.pbix)** — opens in [Power BI Desktop](https://www.microsoft.com/power-platform/products/power-bi/desktop) (free). The data is bundled in the repo, so it loads and runs immediately.
+
+> **Why there is no live link:** `.pbix` is a binary Power BI format — GitHub cannot render it, and a public interactive embed requires *Publish to web* on the Power BI **Service**, which Microsoft gates behind a work/school account. The file below is the real report: download it and every slicer, cross-filter, and drill-through works. For fully interactive dashboards you can click in the browser, see the [Tableau](https://github.com/ANAPBORGES/tableau-sales-profitability-dashboard) and Looker Studio projects.
+
+| Page | Description | Interactions |
+|---|---|---|
+| **Home** | Summary navigation with key metrics | Page navigation buttons, KPI cards |
+| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution | Year slicer, cross-filter chart→KPI |
+| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown | Segment slicer, tooltip detail |
+| **Segments** | Revenue and profit by segment and region · YoY growth comparison | Region drill-down, cross-highlight |
 
 **Previews:**
 
@@ -123,9 +127,10 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 ## 🚀 How to Reproduce
 
 **Power BI (dashboard):**
-1. Open [`superstore-financial-kpis.pbix`](./superstore-financial-kpis.pbix) in Power BI Desktop.
-2. If prompted for the source, point it at [`data/superstore.csv`](./data/superstore.csv) (Get Data ▸ Text/CSV).
-3. DAX measures are documented in [`powerbi/measures.md`](./powerbi/measures.md).
+1. Install [Power BI Desktop](https://www.microsoft.com/power-platform/products/power-bi/desktop) — free, no account required.
+2. [Download `superstore-financial-kpis.pbix`](https://github.com/ANAPBORGES/saas-financial-kpis/raw/main/superstore-financial-kpis.pbix) and open it.
+3. If prompted for the source, point it at [`data/superstore.csv`](./data/superstore.csv) (Get Data ▸ Text/CSV).
+4. DAX measures are documented in [`powerbi/measures.md`](./powerbi/measures.md).
 
 **SQL (optional):**
 1. Load [`data/superstore.csv`](./data/superstore.csv) into a BigQuery table named `superstore.orders` (autodetect keeps the column names and types).
@@ -143,8 +148,8 @@ saas-financial-kpis/
 ├── powerbi/
 │   ├── measures.md                  ← DAX measures
 │   └── data_model.md                ← model, Power Query, visuals
-├── assets/                          ← dashboard screenshots
-├── superstore-financial-kpis.pbix   ← Power BI file
+├── assets/                          ← dashboard screenshots + interaction demo
+├── superstore-financial-kpis.pbix   ← Power BI report (download & open in Desktop)
 └── README.md
 ```
 
