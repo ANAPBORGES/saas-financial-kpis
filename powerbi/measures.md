@@ -7,11 +7,12 @@ Organized in 6 groups by analytical purpose.
 
 ## Data Model
 
-Star schema with 4 tables:
-- `fact_orders` — one row per order line (from BigQuery)
+Star schema modeled in Power BI from the single `data/superstore.csv` file — the
+dimensions are shaped in Power Query (M), which is where the modeling value is:
+- `fact_orders` — one row per order line (loaded from `data/superstore.csv`)
 - `dim_customer` — one row per customer with value tier classification
 - `dim_product` — one row per product with revenue rank and profitability flag
-- `dim_date` — full date dimension generated in Power Query M (2014–2017)
+- `dim_date` — full date dimension generated in Power Query M (2015–2018)
 
 ---
 

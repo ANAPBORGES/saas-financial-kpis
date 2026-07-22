@@ -7,6 +7,11 @@
 -- Is revenue growth accelerating or decelerating?
 -- What is the 3-month rolling average to smooth seasonality?
 -- How does cumulative YTD revenue build month over month?
+--
+-- Note: growth_acceleration is the change in MoM growth. Because MoM
+-- growth already uses LAG, we compute it in the `with_growth` CTE first
+-- and only then LAG over it — BigQuery does not allow one analytic
+-- function to be nested directly inside another.
 
 WITH monthly_revenue AS (
   SELECT
@@ -20,48 +25,47 @@ WITH monthly_revenue AS (
     ROUND(SUM(Profit) / NULLIF(SUM(Sales), 0), 4)  AS profit_margin_pct
   FROM `analytics-portfolio-496419.superstore.orders`
   GROUP BY year_month, order_year, order_month
+),
+
+with_growth AS (
+  SELECT
+    year_month,
+    order_year,
+    order_month,
+    total_orders,
+    unique_customers,
+    mrr,
+    total_profit,
+    profit_margin_pct,
+
+    -- Month-over-month growth
+    LAG(mrr) OVER (ORDER BY year_month)             AS prev_month_mrr,
+    ROUND(
+      (mrr - LAG(mrr) OVER (ORDER BY year_month))
+      / NULLIF(LAG(mrr) OVER (ORDER BY year_month), 0), 4
+    )                                               AS mom_growth_pct,
+
+    -- 3-month rolling average to smooth seasonality
+    ROUND(
+      AVG(mrr) OVER (ORDER BY year_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
+      2
+    )                                               AS rolling_3m_avg,
+
+    -- Cumulative YTD revenue (resets each year)
+    SUM(mrr) OVER (
+      PARTITION BY order_year
+      ORDER BY year_month
+      ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
+    )                                               AS ytd_revenue
+  FROM monthly_revenue
 )
 
 SELECT
-  year_month,
-  order_year,
-  order_month,
-  total_orders,
-  unique_customers,
-  mrr,
-  total_profit,
-  profit_margin_pct,
-
-  -- Month-over-month growth
-  LAG(mrr) OVER (ORDER BY year_month)              AS prev_month_mrr,
+  with_growth.*,
+  -- Growth acceleration = change in MoM growth (LAG over the already-computed column)
   ROUND(
-    (mrr - LAG(mrr) OVER (ORDER BY year_month))
-    / NULLIF(LAG(mrr) OVER (ORDER BY year_month), 0), 4
-  )                                                AS mom_growth_pct,
-
-  -- 3-month rolling average to smooth seasonality
-  ROUND(
-    AVG(mrr) OVER (ORDER BY year_month ROWS BETWEEN 2 PRECEDING AND CURRENT ROW),
-    2
-  )                                                AS rolling_3m_avg,
-
-  -- Growth acceleration: is MoM growth itself growing?
-  ROUND(
-    (mrr - LAG(mrr) OVER (ORDER BY year_month))
-    / NULLIF(LAG(mrr) OVER (ORDER BY year_month), 0)
-    - LAG(
-        (mrr - LAG(mrr) OVER (ORDER BY year_month))
-        / NULLIF(LAG(mrr) OVER (ORDER BY year_month), 0)
-      ) OVER (ORDER BY year_month),
+    mom_growth_pct - LAG(mom_growth_pct) OVER (ORDER BY year_month),
     4
-  )                                                AS growth_acceleration,
-
-  -- Cumulative YTD revenue (resets each year)
-  SUM(mrr) OVER (
-    PARTITION BY order_year
-    ORDER BY year_month
-    ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW
-  )                                                AS ytd_revenue
-
-FROM monthly_revenue
+  )                                                 AS growth_acceleration
+FROM with_growth
 ORDER BY year_month ASC;

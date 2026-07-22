@@ -1,9 +1,9 @@
 # SaaS Financial KPIs 💰
-> End-to-end financial analysis of a retail dataset applying SaaS metrics — MRR, churn, retention, customer value, discount impact, and segment performance.
+> Financial analysis of a retail dataset applying SaaS-style metrics — MRR, churn & retention, customer value, discount impact, and segment performance — delivered as a **Power BI dashboard with DAX**, backed by BigQuery SQL. The data ships **inside this repo** (`data/superstore.csv`), so it is reproducible with no external setup.
 
-[![SQL](https://img.shields.io/badge/SQL-BigQuery-4285F4?style=flat&logo=google-cloud)](https://cloud.google.com/bigquery)
-[![BigQuery](https://img.shields.io/badge/Dataset-BigQuery%20Public-4285F4?style=flat&logo=google-cloud)](https://console.cloud.google.com/bigquery?project=analytics-portfolio-496419&ws=!1m5!1m4!3m2!1sanalytics-portfolio-496419!2ssuperstore!23sTREE_NODE_SELECTION)
-[![Dashboard](https://img.shields.io/badge/Dashboard-Power%20BI-F2C811?style=flat&logo=powerbi)](./superstore-financial-kpis.pbix)
+[![Power BI](https://img.shields.io/badge/Power%20BI-DAX%20·%20Power%20Query-F2C811?style=flat&logo=powerbi&logoColor=black)](./superstore-financial-kpis.pbix)
+[![SQL](https://img.shields.io/badge/SQL-BigQuery%20(8%20queries)-4285F4?style=flat&logo=google-cloud)](./sql)
+[![Data](https://img.shields.io/badge/Data-included%20in%20repo-34A853?style=flat)](./data/superstore.csv)
 [![Status](https://img.shields.io/badge/Status-Complete-success?style=flat)]()
 
 ---
@@ -14,19 +14,19 @@
 **Stakeholders:** Finance, Commercial, and C-level teams
 **Business question:** *How does revenue evolve over time, which customers and segments drive the most value, and where is profitability being eroded by discounting?*
 
-This project analyzes 4 years of sales data from the Superstore dataset (2014–2017), applying SaaS financial metrics to a retail context. Beyond standard MRR and churn analysis, the project deep-dives into discount impact on profitability, customer value tiers, sub-category Pareto analysis, and regional efficiency — delivering insights that support strategic decisions across revenue planning, pricing, and customer retention.
+This project analyzes **4 years of sales** from the classic Superstore dataset (2015–2018), applying SaaS financial metrics to a retail context. Beyond MRR and churn, it deep-dives into **discount impact on profitability**, customer value tiers, sub-category Pareto, and regional efficiency — insights that support revenue planning, pricing, and retention decisions. The metrics were prototyped in **BigQuery SQL** and delivered as a **Power BI** dashboard with DAX time-intelligence.
 
 ---
 
 ## 🎯 Objectives
 
 - [x] Analyze MRR trends with MoM growth, 3-month rolling average, and YTD cumulative revenue
-- [x] Calculate customer churn and retention rates with boundary-year correction
+- [x] Calculate customer churn and retention rates with boundary-year handling
 - [x] Identify the discount threshold above which orders become loss-making
 - [x] Rank customers by revenue and profitability using NTILE and PERCENTILE_CONT
 - [x] Perform Pareto analysis on sub-categories with cumulative revenue share
 - [x] Analyze regional performance with profit efficiency (profit per order)
-- [x] Deliver a multi-page Power BI dashboard with DAX time intelligence measures
+- [x] Deliver a multi-page Power BI dashboard with DAX time-intelligence measures
 
 ---
 
@@ -34,42 +34,35 @@ This project analyzes 4 years of sales data from the Superstore dataset (2014–
 
 | Field | Details |
 |---|---|
-| **Source** | [Kaggle — Superstore Sales Dataset](https://www.kaggle.com/datasets/vivek468/superstore-dataset-final) |
-| **Size** | ~10K orders, 1 table |
-| **Period** | January 2014 – December 2017 |
+| **Source** | Classic **Sample Superstore** — included in this repo at [`data/superstore.csv`](./data/superstore.csv) |
+| **Size** | 9,994 order lines · 5,009 orders · 793 customers |
+| **Period** | January 2015 – December 2018 |
+| **Totals** | US$2.30M sales · US$286K profit (12.5% margin) |
 
-**Key fields used:**
-- `Order Date` — monthly and yearly time series
-- `Sales` — MRR and revenue calculations
-- `Profit` — margin and profitability analysis
-- `Discount` — discount impact analysis
-- `Customer ID` — churn, retention, and customer value
-- `Segment` — Consumer, Corporate, Home Office
-- `Region` — West, East, Central, South
-- `Sub-Category` — Pareto analysis
+**Key fields:** `Order Date`, `Sales`, `Profit`, `Discount`, `Customer ID`, `Segment` (Consumer / Corporate / Home Office), `Region` (West / East / Central / South), `Sub-Category`.
+
+> **Why the data lives in the repo:** keeping `superstore.csv` in version control makes the whole project self-contained and permanently reproducible — no external download, no cloud account, no data that expires.
 
 ---
 
 ## 🔧 Technical Approach
 
-### Data Model
+### Architecture
 
 ```
-Kaggle Superstore CSV
+data/superstore.csv   (versioned in this repo — single source of truth)
         │
-        ▼
-BigQuery: analytics-portfolio-496419.superstore.orders   ← raw table (~10K rows)
+        ├────────────► Power BI Desktop  (Get Data ▸ Text/CSV)
+        │                 Power Query (M) cleanup → data model → DAX measures
+        │                 4 pages: Home · MRR · Churn · Segments
         │
-        ├── vw_mrr               ← monthly MRR, orders, customers, margin
-        ├── vw_churn             ← yearly retention and churn (cohort self-join)
-        └── vw_segments          ← revenue and profit by segment, region, YoY growth
-                │
-                ▼
-        Power BI Desktop (4 pages: Home · MRR · Churn · Segments)
-        DAX measures: time intelligence, rolling averages, dynamic rankings
+        └────────────► BigQuery table `superstore.orders`  (optional, for the SQL)
+                          8 analytical queries prototyping the metrics
 ```
 
-### SQL Queries
+The **Power BI dashboard** is the primary deliverable; the **SQL** folder documents the same metric logic in BigQuery Standard SQL (window functions, cohort self-joins, Pareto), which prototyped the numbers before they became DAX measures.
+
+### SQL Queries (all validated against the dataset)
 
 | Query | Description |
 |---|---|
@@ -77,42 +70,42 @@ BigQuery: analytics-portfolio-496419.superstore.orders   ← raw table (~10K row
 | [`02_churn.sql`](./sql/02_churn.sql) | Yearly churn and retention — cohort self-join |
 | [`03_nrr_segments.sql`](./sql/03_nrr_segments.sql) | Revenue by segment and region with YoY growth |
 | [`04_mrr_advanced.sql`](./sql/04_mrr_advanced.sql) | MoM growth (LAG) + 3M rolling avg + YTD cumulative + growth acceleration |
-| [`05_subcategory_pareto.sql`](./sql/05_subcategory_pareto.sql) | Sub-category Pareto — cumulative share, profitability flag, YoY growth |
+| [`05_subcategory_pareto.sql`](./sql/05_subcategory_pareto.sql) | Sub-category Pareto — cumulative share, profitability flag, YoY |
 | [`06_regional_performance.sql`](./sql/06_regional_performance.sql) | Regional deep dive — RANK, profit per order, revenue share, YoY |
-| [`07_discount_impact.sql`](./sql/07_discount_impact.sql) | Discount tier analysis — loss rate per tier, margin erosion by segment |
-| [`08_customer_value.sql`](./sql/08_customer_value.sql) | Customer ranking — NTILE deciles, PERCENTILE_CONT tiers, value vs profitability |
+| [`07_discount_impact.sql`](./sql/07_discount_impact.sql) | Discount tier analysis — loss rate per tier, margin erosion |
+| [`08_customer_value.sql`](./sql/08_customer_value.sql) | Customer ranking — NTILE deciles, PERCENTILE_CONT tiers |
 
 ### Power BI Implementation
 
 | Document | Description |
 |---|---|
 | [`powerbi/measures.md`](./powerbi/measures.md) | DAX measures: time intelligence, rolling avg, YoY, rankings, churn |
-| [`powerbi/data_model.md`](./powerbi/data_model.md) | View schemas, Power Query transformations, and custom visuals |
+| [`powerbi/data_model.md`](./powerbi/data_model.md) | Model, Power Query transformations, and visuals |
 
 ---
 
 ## 📈 Key Findings
 
-1. **51% revenue growth over 4 years** — MRR grew from $40K/month (2014) to $61K/month (2017), with 3-month rolling avg revealing consistent upward momentum
-2. **Retention improving year over year** — churn dropped from 26% (2014) to 12% (2016); 2017 excluded from churn calculation as the dataset ends that year
-3. **Discounting is eroding profitability** — orders with >30% discount have a loss rate above 70%; the break-even discount level is approximately 20%
-4. **Consumer segment dominates revenue** — Consumer = ~50% of total revenue ($1.16M), but Corporate has a higher profit margin per order
-5. **West region leads in revenue and profit** — West generates $725K and the highest profit per order; South lags with lower efficiency
-6. **Top 5 sub-categories = 60% of revenue** — classic Pareto concentration; Tables sub-category is the most loss-making despite significant revenue
+1. **~51% revenue growth over the period** — monthly revenue grew from ≈US$40K/month (2015) to ≈US$61K/month (2018); the 3-month rolling average confirms steady upward momentum.
+2. **Retention improving year over year** — churn fell from **26.6% (2015) to 12.5% (2017)**; 2018 is excluded from churn (it is the last year, with no following year to be retained into).
+3. **Discounting is the main profit leak** — orders discounted **>30% have an 83% loss rate** (−US$106K profit); profitability turns negative **above ~20% discount**, the effective break-even.
+4. **Consumer drives volume, not margin** — the Consumer segment is **50.6% of revenue (US$1.16M)** but the *lowest* margin (11.5%); Home Office and Corporate are more profitable per dollar (14.0% / 13.0%).
+5. **West leads on both revenue and efficiency** — West generates **US$725K** and the highest **profit per order (US$67)**; Central is the least efficient (US$34/order).
+6. **Sub-category Pareto with a value destroyer** — the top 6 of 17 sub-categories ≈ **65% of revenue**; **Tables** is the biggest loss-maker (−US$18K profit on US$207K revenue) — high volume, negative margin.
+
+*All figures were validated by running the queries in [`/sql`](./sql) against `data/superstore.csv`.*
 
 ---
 
 ## 📊 Dashboard
 
-**Tool:** Power BI Desktop
-**File:** [Download .pbix](./superstore-financial-kpis.pbix)
-**BigQuery:** [View public dataset](https://console.cloud.google.com/bigquery?project=analytics-portfolio-496419&ws=!1m5!1m4!3m2!1sanalytics-portfolio-496419!2ssuperstore!23sTREE_NODE_SELECTION)
+**Tool:** Power BI Desktop · **File:** [`superstore-financial-kpis.pbix`](./superstore-financial-kpis.pbix)
 
 | Page | Description |
 |---|---|
 | **Home** | Summary navigation with key metrics |
-| **MRR** | Monthly revenue + 3M rolling avg · Active customers trend · Profit margin evolution |
-| **Churn** | Yearly retention vs churn · Cohort area chart · Retained vs churned breakdown |
+| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution |
+| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown |
 | **Segments** | Revenue and profit by segment and region · YoY growth comparison |
 
 **Previews:**
@@ -127,44 +120,33 @@ BigQuery: analytics-portfolio-496419.superstore.orders   ← raw table (~10K row
 
 ---
 
+## 🚀 How to Reproduce
+
+**Power BI (dashboard):**
+1. Open [`superstore-financial-kpis.pbix`](./superstore-financial-kpis.pbix) in Power BI Desktop.
+2. If prompted for the source, point it at [`data/superstore.csv`](./data/superstore.csv) (Get Data ▸ Text/CSV).
+3. DAX measures are documented in [`powerbi/measures.md`](./powerbi/measures.md).
+
+**SQL (optional):**
+1. Load [`data/superstore.csv`](./data/superstore.csv) into a BigQuery table named `superstore.orders` (autodetect keeps the column names and types).
+2. Run the queries in [`/sql`](./sql) in order.
+
+---
+
 ## 📁 Repository Structure
 
 ```
 saas-financial-kpis/
-│
-├── sql/
-│   ├── 01_mrr.sql                   ← MRR, active customers, profit margin by month
-│   ├── 02_churn.sql                 ← Churn/retention cohort (yearly self-join)
-│   ├── 03_nrr_segments.sql          ← Segment revenue with YoY growth
-│   ├── 04_mrr_advanced.sql          ← MoM growth + 3M rolling avg + YTD + acceleration
-│   ├── 05_subcategory_pareto.sql    ← Sub-category Pareto + profitability flag
-│   ├── 06_regional_performance.sql  ← Regional RANK + profit per order + YoY
-│   ├── 07_discount_impact.sql       ← Discount tier analysis + loss rate
-│   └── 08_customer_value.sql        ← Customer NTILE deciles + value vs profit tiers
-│
+├── data/
+│   └── superstore.csv               ← dataset (versioned — the single source of truth)
+├── sql/                             ← 8 BigQuery analytical queries (validated)
 ├── powerbi/
-│   ├── measures.md                  ← DAX measures: time intelligence, rolling avg, rankings
-│   └── data_model.md                ← View schemas, Power Query, custom visuals
-│
-├── assets/
-│   ├── Home.png
-│   ├── MRR.png
-│   ├── Churn.png
-│   └── Segments.png
-│
-├── superstore-financial-kpis.pbix   ← Power BI file (open in Power BI Desktop)
+│   ├── measures.md                  ← DAX measures
+│   └── data_model.md                ← model, Power Query, visuals
+├── assets/                          ← dashboard screenshots
+├── superstore-financial-kpis.pbix   ← Power BI file
 └── README.md
 ```
-
----
-
-## 🚀 How to Reproduce
-
-1. Download the dataset from [Kaggle](https://www.kaggle.com/datasets/vivek468/superstore-dataset-final)
-2. Upload the CSV to BigQuery (dataset name: `superstore`, table name: `orders`)
-3. Run the SQL queries in order (01 → 08) to create the views and analytical queries
-4. Open the `.pbix` file in Power BI Desktop — the data will load automatically if connected to the same BigQuery project
-5. Add the DAX measures from [`powerbi/measures.md`](./powerbi/measures.md) to enhance the model
 
 ---
 

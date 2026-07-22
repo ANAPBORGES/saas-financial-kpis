@@ -3,30 +3,31 @@
 ## Architecture
 
 ```
-Kaggle Superstore CSV
+data/superstore.csv   (versioned in this repo — the single source of truth)
         │
-        ▼
-BigQuery: analytics-portfolio-496419.superstore.orders   ← raw table (1 table, ~10K rows)
+        ├──────────────► Power BI Desktop
+        │                   Power Query (M): Get Data ▸ Text/CSV, typed columns, Year column
+        │                   Data model + DAX measures
+        │                   ├── Page: Home      ← navigation and summary
+        │                   ├── Page: MRR       ← monthly revenue trends
+        │                   ├── Page: Churn     ← retention and churn analysis
+        │                   └── Page: Segments  ← segment and region breakdown
         │
-        ├── vw_mrr          ← monthly revenue, orders, customers, margin
-        ├── vw_churn        ← yearly retention and churn rates (cohort join)
-        └── vw_segments     ← revenue and profit by segment, region, YoY growth
-                │
-                ▼
-        Power BI Desktop (DirectQuery / Import)
-                │
-                ├── Page: Home      ← navigation and summary
-                ├── Page: MRR       ← monthly revenue trends
-                ├── Page: Churn     ← retention and churn analysis
-                └── Page: Segments  ← segment and region breakdown
+        └──────────────► BigQuery table `superstore.orders`  (optional)
+                            SQL prototypes of the same metrics (see /sql)
 ```
+
+The dashboard reads the CSV directly, so it needs no cloud account. The BigQuery path is
+optional and only used to run the SQL prototypes.
 
 ---
 
-## BigQuery Views
+## SQL metric prototypes
 
-### vw_mrr
-Built from [`01_mrr.sql`](../sql/01_mrr.sql)
+The three analytical shapes below (built in `/sql`) define the metrics that the Power BI
+model reproduces with DAX. Column descriptions double as the semantic dictionary.
+
+### MRR — from [`01_mrr.sql`](../sql/01_mrr.sql)
 
 | Column | Type | Description |
 |---|---|---|
@@ -37,24 +38,24 @@ Built from [`01_mrr.sql`](../sql/01_mrr.sql)
 | `total_profit` | FLOAT | Total profit |
 | `profit_margin_pct` | FLOAT | Profit ÷ Revenue × 100 |
 
-### vw_churn
-Built from [`02_churn.sql`](../sql/02_churn.sql)
+### Churn — from [`02_churn.sql`](../sql/02_churn.sql)
 
-Uses a self-join on `customer_years` CTE: customer A in year N is matched against customer A in year N+1. If no match exists, the customer is counted as churned.
+Self-join on a `customer_years` CTE: a customer active in year *N* is matched to year *N+1*; no match ⇒ churned.
 
 | Column | Type | Description |
 |---|---|---|
-| `order_year` | INT | Year (2014–2017) |
+| `order_year` | INT | Year (2015–2018) |
 | `total_customers` | INT | Unique customers who bought in this year |
 | `retained_customers` | INT | Customers who also bought in year+1 |
 | `churned_customers` | INT | Customers who did NOT return in year+1 |
 | `retention_rate_pct` | FLOAT | retained ÷ total × 100 |
 | `churn_rate_pct` | FLOAT | churned ÷ total × 100 |
 
-### vw_segments
-Built from [`03_nrr_segments.sql`](../sql/03_nrr_segments.sql)
+> **Boundary year:** 2018 is the last year in the data, so it has no *year+1* to be retained into and reads 100% churn by construction — exclude it when interpreting the trend.
 
-Uses a self-join on `segment_yearly` to calculate YoY growth per segment/region pair.
+### Segments — from [`03_nrr_segments.sql`](../sql/03_nrr_segments.sql)
+
+Self-join on `segment_yearly` for YoY growth per segment/region pair.
 
 | Column | Type | Description |
 |---|---|---|
@@ -65,27 +66,26 @@ Uses a self-join on `segment_yearly` to calculate YoY growth per segment/region 
 | `total_profit` | FLOAT | Total profit |
 | `unique_customers` | INT | Distinct customers |
 | `total_orders` | INT | Distinct orders |
-| `prev_year_revenue` | FLOAT | Prior year revenue (for growth calc) |
-| `yoy_growth_pct` | FLOAT | (current - prior) ÷ prior × 100 |
+| `yoy_growth_pct` | FLOAT | (current − prior) ÷ prior × 100 |
 
 ---
 
 ## Power Query Transformations
 
-The three views are loaded from BigQuery via the native Power BI connector. One transformation was applied in Power Query:
-
-### Year column (vw_mrr)
+The CSV is loaded via **Get Data ▸ Text/CSV**. Columns are typed (dates, decimals), and a
+standalone **Year** column is derived from the order date for annual roll-ups:
 
 ```m
 #"Added Year" = Table.AddColumn(
-    vw_mrr_table,
+    Source,
     "Year",
-    each Text.Start([year_month], 4),
-    type text
+    each Date.Year([Order Date]),
+    Int64.Type
 )
 ```
 
-**Why:** The SQL view outputs `year_month` as `"2014-01"` (full month granularity). For the annual column chart on the MRR page, a standalone `Year` column was needed to group months into years without losing the monthly time series for other charts.
+**Why:** the monthly time series is kept intact for trend charts, while a discrete `Year`
+column drives the annual column/comparison visuals without a separate query.
 
 ---
 
