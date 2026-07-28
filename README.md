@@ -79,8 +79,11 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 
 | Document | Description |
 |---|---|
-| [`powerbi/measures.md`](./powerbi/measures.md) | DAX measures: time intelligence, rolling avg, YoY, rankings, churn |
-| [`powerbi/data_model.md`](./powerbi/data_model.md) | Model, Power Query transformations, and visuals |
+| [`powerbi/data_model.md`](./powerbi/data_model.md) | Star schema — tables, relationships, column reference, required settings |
+| [`powerbi/power_query.md`](./powerbi/power_query.md) | Full M code — parameter, staging, generated calendar, four dimensions, fact table |
+| [`powerbi/measures.md`](./powerbi/measures.md) | 40+ DAX measures — time intelligence, RANKX, what-if, dynamic titles |
+| [`powerbi/build_guide.md`](./powerbi/build_guide.md) | Step-by-step assembly, incl. slicers, drill-through, tooltip pages, bookmarks |
+| [`powerbi/theme.json`](./powerbi/theme.json) | Colourblind-validated report theme (import via View ▸ Themes) |
 
 ---
 
