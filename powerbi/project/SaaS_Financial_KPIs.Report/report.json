@@ -1,6 +1,22 @@
 {
-  "config": "{\"version\": \"5.43\", \"activeSectionIndex\": 0, \"defaultDrillFilterOtherVisuals\": true}",
+  "config": "{\"version\": \"5.43\", \"themeCollection\": {\"baseTheme\": {\"name\": \"CY24SU10\", \"version\": \"5.55\", \"type\": 2}}, \"activeSectionIndex\": 0, \"defaultDrillFilterOtherVisuals\": true, \"settings\": {\"useStylableVisualContainerHeader\": true}}",
   "layoutOptimization": 0,
+  "resourcePackages": [
+    {
+      "resourcePackage": {
+        "disabled": false,
+        "items": [
+          {
+            "name": "CY24SU10",
+            "path": "BaseThemes/CY24SU10.json",
+            "type": 202
+          }
+        ],
+        "name": "SharedResources",
+        "type": 2
+      }
+    }
+  ],
   "sections": [
     {
       "name": "page_1",
@@ -8,7 +24,7 @@
       "filters": "[]",
       "ordinal": 0,
       "visualContainers": [],
-      "config": "{\"visibility\": 0}",
+      "config": "{}",
       "displayOption": 1,
       "width": 1280,
       "height": 720
@@ -19,7 +35,7 @@
       "filters": "[]",
       "ordinal": 1,
       "visualContainers": [],
-      "config": "{\"visibility\": 0}",
+      "config": "{}",
       "displayOption": 1,
       "width": 1280,
       "height": 720
@@ -30,7 +46,7 @@
       "filters": "[]",
       "ordinal": 2,
       "visualContainers": [],
-      "config": "{\"visibility\": 0}",
+      "config": "{}",
       "displayOption": 1,
       "width": 1280,
       "height": 720
@@ -41,7 +57,7 @@
       "filters": "[]",
       "ordinal": 3,
       "visualContainers": [],
-      "config": "{\"visibility\": 0}",
+      "config": "{}",
       "displayOption": 1,
       "width": 1280,
       "height": 720
@@ -52,7 +68,7 @@
       "filters": "[]",
       "ordinal": 4,
       "visualContainers": [],
-      "config": "{\"visibility\": 0}",
+      "config": "{}",
       "displayOption": 1,
       "width": 1280,
       "height": 720
