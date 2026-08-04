@@ -14,7 +14,7 @@
         "name": "p_DataPath",
         "kind": "m",
         "expression": [
-          "\"C:\\\\Users\\\\YourName\\\\saas-financial-kpis\\\\data\\\\superstore.csv\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]"
+          "\"C:\\\\Users\\\\apdar\\\\github-portfolio\\\\saas-financial-kpis\\\\data\\\\superstore.csv\" meta [IsParameterQuery=true, Type=\"Text\", IsParameterQueryRequired=true]"
         ],
         "annotations": [
           {
