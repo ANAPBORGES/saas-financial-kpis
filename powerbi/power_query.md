@@ -86,11 +86,14 @@ unambiguously regardless of the machine's regional settings.
 ## 2 — `dim_date` (generated in M, not DAX)
 
 A calendar built from the data's own range, so it never needs manual editing.
+The upper bound is the last **ship** date, not the last order date — shipments run
+into the following year, and the inactive `ship_date` relationship would otherwise
+have dates with no matching row.
 
 ```m
 let
     MinDate    = List.Min(src_superstore[Order Date]),
-    MaxDate    = List.Max(src_superstore[Order Date]),
+    MaxDate    = List.Max(src_superstore[Ship Date]),
     StartDate  = #date(Date.Year(MinDate), 1, 1),
     EndDate    = #date(Date.Year(MaxDate), 12, 31),
     DayCount   = Duration.Days(EndDate - StartDate) + 1,
@@ -128,8 +131,7 @@ sorted, or extended. A single explicit `dim_date` is what makes `SAMEPERIODLASTY
 
 ## 3 — `dim_customer`
 
-One row per customer, with lifetime aggregates and a value tier computed from the
-revenue distribution — not from hard-coded thresholds.
+One row per customer, with lifetime aggregates and a value tier.
 
 ```m
 let
@@ -204,7 +206,7 @@ let
         {
             {"product_name",  each List.First([Product Name]), type text},
             {"category",      each List.First([Category]), type text},
-            {"sub_category",  each List.First([Sub-Category]), type text},
+            {"sub_category",  each List.First([#"Sub-Category"]), type text},
             {"total_revenue", each List.Sum([Sales]), type number},
             {"total_profit",  each List.Sum([Profit]), type number},
             {"units_sold",    each List.Sum([Quantity]), Int64.Type}
@@ -250,6 +252,11 @@ slicer ("show me the top 50 products"). It is deliberately *not* the same thing 
 `[Product Revenue Rank]` in `measures.md`, which is a `RANKX` measure that
 recalculates under whatever filters the user applies. Having both is the point:
 one is a stable attribute, the other is context-aware.
+
+> **`[#"Sub-Category"]`, not `[Sub-Category]`.** A hyphen is not allowed in an M
+> identifier, so the bare form fails to parse with *"Invalid identifier"*. Column
+> names with hyphens have to be written as quoted identifiers. Names with plain
+> spaces — `[Order Date]` — are fine unquoted.
 
 ---
 
