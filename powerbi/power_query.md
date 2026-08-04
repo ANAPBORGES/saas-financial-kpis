@@ -75,7 +75,7 @@ in
 - **`Postal Code` stays text.** Typed as a number it would drop the leading zero
   on north-eastern ZIPs (`01star` → `1star`). Postal codes are labels, not
   quantities — they are never summed.
-- **`Table.Buffer`** materialises the CSV once in memory. Five downstream queries
+- **`Table.Buffer`** loads the CSV into memory once. Five downstream queries
   read this source; without buffering the file is parsed five times.
 
 The dates in the CSV are ISO (`2017-11-08`), so `"en-US"` parses them
@@ -149,15 +149,11 @@ let
     ),
     Renamed = Table.RenameColumns(Grouped, {{"Customer ID", "customer_id"}}),
 
-    RevenueList = List.Buffer(Renamed[lifetime_revenue]),
-    P80 = List.Percentile(RevenueList, 0.80),
-    P50 = List.Percentile(RevenueList, 0.50),
-
     AddTier = Table.AddColumn(
         Renamed,
         "customer_value_tier",
-        each if [lifetime_revenue] >= P80 then "High Value"
-             else if [lifetime_revenue] >= P50 then "Mid Value"
+        each if [lifetime_revenue] >= 5000 then "High Value"
+             else if [lifetime_revenue] >= 1500 then "Mid Value"
              else "Low Value",
         type text
     ),
@@ -185,9 +181,10 @@ in
     AddTenure
 ```
 
-**The percentile split is the point.** `List.Percentile` reads the actual
-distribution, so "High Value" means *top 20% of this dataset* rather than an
-arbitrary "above US$5,000" that silently breaks when the data changes.
+The thresholds are business rules and belong in the brief, not in the code —
+they are written here so they are visible and easy to change. If they should
+follow the distribution instead of fixed values, the deciles are already
+computed in [`sql/08_customer_value_tiers.sql`](../sql/08_customer_value_tiers.sql).
 
 `customer_value_tier_sort` exists so the tier sorts High → Mid → Low instead of
 alphabetically (High, Low, Mid). Apply **Sort by column** on it.

@@ -11,12 +11,12 @@ Each step assumes the previous one is done.
 
 ## Step 1 — Apply the theme first
 
-**View ▸ Themes ▸ Browse for themes ▸** select [`theme.json`](./theme.json).
+**View ▸ Themes** — pick a theme with a clear categorical palette, and keep it
+consistent across all pages.
 
-Doing this before adding any visual means every chart is born on-brand — the eight
-data colors, card typography, gridlines and rounded borders are already set, so you
-are never recolouring by hand. The palette is colourblind-validated (see the note
-at the end).
+Doing this before adding any visual means every chart is born on-brand — data
+colours, card typography and gridlines are already set, so you are never
+recolouring by hand.
 
 ---
 
@@ -171,12 +171,3 @@ report is rebuilt:
 
 ---
 
-## A note on the colour palette
-
-`theme.json`'s eight data colours are validated colourblind-safe for adjacent
-series (worst-case CVD separation ΔE 9.1, above the 8.0 target). Three of them
-(aqua, yellow, magenta) sit below a 3:1 contrast ratio on the light background, so
-wherever they carry meaning, **keep data labels visible** — which the recipes above
-already do. If you ever add a 9th series, don't invent a colour: fold it into
-"Other" or use small multiples. The full reasoning is standard categorical-palette
-practice; the theme just encodes it.
