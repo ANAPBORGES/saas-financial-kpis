@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "SemanticModel",
+    "displayName": "SaaS_Financial_KPIs"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "119f9b0e-1bae-4ba4-8909-bbab82ad618f"
+  }
+}

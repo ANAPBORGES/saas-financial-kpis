@@ -1,0 +1,11 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/gitIntegration/platformProperties/2.0.0/schema.json",
+  "metadata": {
+    "type": "Report",
+    "displayName": "SaaS_Financial_KPIs"
+  },
+  "config": {
+    "version": "2.0",
+    "logicalId": "8a60a2c7-c069-4666-871c-ef22e2bdd935"
+  }
+}

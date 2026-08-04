@@ -1,0 +1,61 @@
+{
+  "config": "{\"version\": \"5.43\", \"activeSectionIndex\": 0, \"defaultDrillFilterOtherVisuals\": true}",
+  "layoutOptimization": 0,
+  "sections": [
+    {
+      "name": "page_1",
+      "displayName": "Executive Summary",
+      "filters": "[]",
+      "ordinal": 0,
+      "visualContainers": [],
+      "config": "{\"visibility\": 0}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "page_2",
+      "displayName": "Revenue & Growth",
+      "filters": "[]",
+      "ordinal": 1,
+      "visualContainers": [],
+      "config": "{\"visibility\": 0}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "page_3",
+      "displayName": "Customers",
+      "filters": "[]",
+      "ordinal": 2,
+      "visualContainers": [],
+      "config": "{\"visibility\": 0}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "page_4",
+      "displayName": "Products",
+      "filters": "[]",
+      "ordinal": 3,
+      "visualContainers": [],
+      "config": "{\"visibility\": 0}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    },
+    {
+      "name": "page_5",
+      "displayName": "Discount Impact",
+      "filters": "[]",
+      "ordinal": 4,
+      "visualContainers": [],
+      "config": "{\"visibility\": 0}",
+      "displayOption": 1,
+      "width": 1280,
+      "height": 720
+    }
+  ]
+}

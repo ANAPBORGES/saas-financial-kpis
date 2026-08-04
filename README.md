@@ -80,6 +80,7 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 | Document | Description |
 |---|---|
 | [`powerbi/data_model.md`](./powerbi/data_model.md) | Star schema — tables, relationships, column reference, required settings |
+| [`powerbi/project/`](./powerbi/project/) | **Power BI Project (PBIP)** — open it and the model builds itself: M queries, relationships, 40 DAX measures |
 | [`powerbi/power_query.md`](./powerbi/power_query.md) | Full M code — parameter, staging, generated calendar, four dimensions, fact table |
 | [`powerbi/measures.md`](./powerbi/measures.md) | 40+ DAX measures — time intelligence, RANKX, what-if, dynamic titles |
 | [`powerbi/build_guide.md`](./powerbi/build_guide.md) | Step-by-step assembly, incl. slicers, drill-through, tooltip pages, bookmarks |
@@ -103,7 +104,7 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 
 **Tool:** Power BI Desktop · 4 pages · DAX time-intelligence · Power Query (M)
 
-> **Status: being rebuilt.** The `.pbix` is temporarily withdrawn while the report is rebuilt on a proper star schema, with slicers, drill-through, custom tooltip pages and what-if parameters. The metric logic is fully documented in [`powerbi/measures.md`](./powerbi/measures.md) and [`powerbi/data_model.md`](./powerbi/data_model.md), and every number below is reproducible from the SQL in [`/sql`](./sql). For dashboards you can click and filter in the browser today, see the [Tableau project](https://github.com/ANAPBORGES/tableau-sales-profitability-dashboard).
+> **Status: model complete, visuals in progress.** The semantic model ships as a [**Power BI Project**](./powerbi/project/) — open `SaaS_Financial_KPIs.pbip` in Desktop, point the `p_DataPath` parameter at the CSV, and the star schema, the Power Query transformations and all 40 DAX measures are built. Report pages are created and named; visuals are being placed. Every number below is reproducible from the SQL in [`/sql`](./sql).
 
 | Page | Description |
 |---|---|
