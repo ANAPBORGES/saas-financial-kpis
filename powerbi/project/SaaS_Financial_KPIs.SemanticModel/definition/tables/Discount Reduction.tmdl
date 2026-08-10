@@ -1,0 +1,21 @@
+table 'Discount Reduction'
+	lineageTag: 7ce81a84-1491-412f-8d35-0dbeee9a2543
+
+	measure 'Discount Reduction Value' = SELECTEDVALUE('Discount Reduction'[Discount Reduction], 0)
+		formatString: 0.0%
+		lineageTag: 85354cea-9303-4982-ba21-98e9d9db5280
+
+	column 'Discount Reduction'
+		formatString: 0.0%
+		lineageTag: 214b9a17-96d2-4f6e-9c40-29726c9ce884
+		summarizeBy: none
+		sourceColumn: [Value]
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Discount Reduction' = calculated
+		mode: import
+		source = GENERATESERIES(0, 0.5, 0.05)
+
+	annotation PBI_Id = discount_reduction_param
+

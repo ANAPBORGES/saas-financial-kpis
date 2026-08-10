@@ -1,0 +1,549 @@
+table fact_orders
+	lineageTag: f9005500-74d2-49fe-89b6-9c88732cb477
+
+	measure 'Total Revenue' = SUM(fact_orders[sales])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 1 Core
+		lineageTag: 2d032269-4400-425a-9ad5-4b875e50230a
+
+	measure 'Total Profit' = SUM(fact_orders[profit])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 1 Core
+		lineageTag: aba69695-beef-4d57-affc-42bcbfc53ec2
+
+	measure 'Profit Margin %' = DIVIDE([Total Profit], [Total Revenue], 0)
+		formatString: 0.0%
+		displayFolder: 1 Core
+		lineageTag: 708321d0-0588-469d-bbf2-2ca02177516c
+
+	measure 'Total Orders' = DISTINCTCOUNT(fact_orders[order_id])
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: 4e6b272a-734e-4253-8ee2-98b825735783
+
+	measure 'Total Customers' = DISTINCTCOUNT(fact_orders[customer_id])
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: 3ce79dba-80e2-40f9-84f8-76f510c229ec
+
+	measure 'Avg Order Value' = DIVIDE([Total Revenue], [Total Orders], 0)
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 1 Core
+		lineageTag: 819f2b37-f3f7-46ce-92b1-f2a86edd9d56
+
+	measure 'Total Quantity' = SUM(fact_orders[quantity])
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: 89618709-1bcb-4e7e-bb2b-bb1d50370d51
+
+	measure 'Avg Discount' = AVERAGE(fact_orders[discount])
+		formatString: 0.0%
+		displayFolder: 1 Core
+		lineageTag: 99470a36-4ea8-432a-b5a7-94a2e85d1280
+
+	measure 'Revenue YoY %' =
+			VAR Y = YEAR(MAX(fact_orders[order_date]))
+			VAR Cur = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y))
+			VAR Prev = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y - 1))
+			RETURN
+			    IF(ISBLANK(Prev) || Prev = 0, BLANK(), DIVIDE(Cur - Prev, Prev))
+		formatString: 0.0%
+		displayFolder: 2 Time Intelligence
+		lineageTag: b50b19a4-2032-4bb1-8149-099756ce02f6
+
+	measure 'Revenue YoY Abs' =
+			VAR Y = YEAR(MAX(fact_orders[order_date]))
+			VAR Cur = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y))
+			VAR Prev = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y - 1))
+			RETURN Cur - Prev
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 2 Time Intelligence
+		lineageTag: 8a2e3828-5105-4a1b-8e7c-f67148dd5361
+
+	measure 'Revenue Rolling 3M' =
+			VAR LastDay = MAX(fact_orders[order_date])
+			VAR Y = YEAR(LastDay)
+			VAR M = MONTH(LastDay)
+			-- janela de 3 meses expressa em AAAAMM, para nao existir mes 0 ou negativo
+			VAR StartYM = IF(M >= 3, Y * 100 + M - 2, (Y - 1) * 100 + M + 10)
+			RETURN
+			    IF(
+			        ISBLANK(LastDay),
+			        BLANK(),
+			        CALCULATE(
+			            [Total Revenue],
+			            FILTER(
+			                ALL(dim_date),
+			                dim_date[Year Month Sort] >= StartYM && dim_date[Date] <= LastDay
+			            )
+			        )
+			    )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 2 Time Intelligence
+		lineageTag: ceb8c59c-cdd7-4a72-a736-625a2a0fc4dc
+
+	measure 'Revenue YTD' =
+			VAR LastDay = MAX(fact_orders[order_date])
+			VAR YearStart = DATE(YEAR(LastDay), 1, 1)
+			RETURN
+			    IF(
+			        ISBLANK(LastDay),
+			        BLANK(),
+			        CALCULATE(
+			            [Total Revenue],
+			            FILTER(ALL(dim_date), dim_date[Date] >= YearStart && dim_date[Date] <= LastDay)
+			        )
+			    )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 2 Time Intelligence
+		lineageTag: 476579b4-bb34-48df-9227-7180b06a2ea7
+
+	measure 'Revenue YTD Prior Year' =
+			VAR LastDay = MAX(fact_orders[order_date])
+			VAR PriorStart = DATE(YEAR(LastDay) - 1, 1, 1)
+			VAR PriorEnd = DATE(YEAR(LastDay) - 1, MONTH(LastDay), DAY(LastDay))
+			RETURN
+			    IF(
+			        ISBLANK(LastDay),
+			        BLANK(),
+			        CALCULATE(
+			            [Total Revenue],
+			            FILTER(ALL(dim_date), dim_date[Date] >= PriorStart && dim_date[Date] <= PriorEnd)
+			        )
+			    )
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 2 Time Intelligence
+		lineageTag: ac34fefb-a329-4070-b390-8211e4e8d88d
+
+	measure 'Revenue YTD vs PY %' = DIVIDE([Revenue YTD] - [Revenue YTD Prior Year], [Revenue YTD Prior Year], BLANK())
+		formatString: 0.0%
+		displayFolder: 2 Time Intelligence
+		lineageTag: b683efae-9d1d-4452-847e-0c21be1b5d6d
+
+	measure 'Revenue % of Total' = DIVIDE([Total Revenue], CALCULATE([Total Revenue], ALLSELECTED()), 0)
+		formatString: 0.0%
+		displayFolder: 3 Dynamic
+		lineageTag: 38eb76da-1127-41b9-a242-bc63604145c8
+
+	measure 'Product Revenue Rank' =
+			IF(
+			    HASONEVALUE(dim_product[product_name]),
+			    RANKX(ALLSELECTED(dim_product[product_name]), [Total Revenue], , DESC, DENSE)
+			)
+		formatString: 0
+		displayFolder: 3 Dynamic
+		lineageTag: 95758ed0-e399-45e9-a3e2-256df13fd334
+
+	measure 'SubCategory Revenue Rank' =
+			IF(
+			    HASONEVALUE(dim_product[sub_category]),
+			    RANKX(ALLSELECTED(dim_product[sub_category]), [Total Revenue], , DESC, DENSE)
+			)
+		formatString: 0
+		displayFolder: 3 Dynamic
+		lineageTag: 9b568f13-9961-409c-a7d6-ae435f638219
+
+	measure 'Revenue % of Category' =
+			DIVIDE(
+			    [Total Revenue],
+			    CALCULATE([Total Revenue], ALLEXCEPT(dim_product, dim_product[category])),
+			    0
+			)
+		formatString: 0.0%
+		displayFolder: 3 Dynamic
+		lineageTag: a833226d-66dc-49b0-a013-fefd1c42d400
+
+	measure 'Profit Margin vs Category Avg' =
+			VAR CurrentMargin = [Profit Margin %]
+			VAR CategoryAvgMargin =
+			    CALCULATE([Profit Margin %], ALLEXCEPT(dim_product, dim_product[category]))
+			RETURN CurrentMargin - CategoryAvgMargin
+		formatString: 0.0%
+		displayFolder: 3 Dynamic
+		lineageTag: 273d39f9-d360-4f2d-9bd3-531bdda3ff3a
+
+	measure 'Avg Customer LTV' = AVERAGEX(VALUES(dim_customer[customer_id]), CALCULATE([Total Revenue]))
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 4 Customer
+		lineageTag: cef8a999-1c66-47fe-9d44-ebd1a848816a
+
+	measure 'Revenue per Customer' = DIVIDE([Total Revenue], [Total Customers], 0)
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 4 Customer
+		lineageTag: 7c82a64d-87e3-4987-bd6c-914491a992f3
+
+	measure 'High Value Revenue %' =
+			DIVIDE(
+			    CALCULATE([Total Revenue], dim_customer[customer_value_tier] = "High Value"),
+			    [Total Revenue],
+			    0
+			)
+		formatString: 0.0%
+		displayFolder: 4 Customer
+		lineageTag: 3b77bacb-cddd-4ac9-a158-b6f623715f2d
+
+	measure 'Loss-Making Orders' = CALCULATE([Total Orders], fact_orders[is_profitable] = FALSE())
+		formatString: #,0
+		displayFolder: 4 Customer
+		lineageTag: d8c5501e-a07e-4a17-bd6a-1ad8ad24ba33
+
+	measure 'Loss-Making Orders %' = DIVIDE([Loss-Making Orders], [Total Orders], 0)
+		formatString: 0.0%
+		displayFolder: 4 Customer
+		lineageTag: 3eaff2a2-c484-4aee-97af-0fd65fc9a2fd
+
+	measure 'Avg Days to Ship' = AVERAGEX(VALUES(fact_orders[order_id]), CALCULATE(MAX(fact_orders[days_to_ship])))
+		formatString: 0.0
+		displayFolder: 4 Customer
+		lineageTag: 31718f64-1e2a-4826-972d-46a52f214429
+
+	measure 'New Customers' =
+			VAR PeriodStart = MIN(dim_date[Date])
+			VAR PeriodEnd = MAX(dim_date[Date])
+			RETURN
+			    IF(
+			        ISBLANK(PeriodStart) || ISBLANK(PeriodEnd),
+			        BLANK(),
+			        CALCULATE(
+			            DISTINCTCOUNT(dim_customer[customer_id]),
+			            FILTER(
+			                ALLSELECTED(dim_customer),
+			                dim_customer[first_order_date] >= PeriodStart
+			                    && dim_customer[first_order_date] <= PeriodEnd
+			            )
+			        )
+			    )
+		formatString: #,0
+		displayFolder: 4 Customer
+		lineageTag: c5714a1e-fa60-4d26-9e56-683bea7f93d3
+
+	measure 'New Customers %' = DIVIDE([New Customers], [Total Customers], 0)
+		formatString: 0.0%
+		displayFolder: 4 Customer
+		lineageTag: 388fb4bc-16eb-4d07-8d69-c255ea9b2628
+
+	measure 'Revenue Lost to Discount' = SUMX(fact_orders, fact_orders[sales] * fact_orders[discount])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 5 Discount
+		lineageTag: ecbbb8ef-52f1-4cfb-b73b-db501dc7d33f
+
+	measure 'Revenue at Full Price' = SUMX(fact_orders, fact_orders[sales] + (fact_orders[sales] * fact_orders[discount]))
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 5 Discount
+		lineageTag: 180109de-1ae3-42e5-8d83-a6e897d96b6e
+
+	measure 'Discount Impact on Profit' = SUMX(fact_orders, fact_orders[sales] * fact_orders[discount] * fact_orders[margin_pct])
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 5 Discount
+		lineageTag: 75a135db-82c2-45d6-b062-e240fc7145ed
+
+	measure 'Profit if No Discount' = [Total Profit] - [Discount Impact on Profit]
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 5 Discount
+		lineageTag: 1d182864-28f8-4d2c-87e7-8e8da24a14a4
+
+	measure 'Loss-Making Revenue' = CALCULATE([Total Revenue], fact_orders[is_profitable] = FALSE())
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 5 Discount
+		lineageTag: b1f5c9f5-0c20-4fd7-99df-470d8b3b8a3b
+
+	measure 'Weighted Avg Discount' =
+			DIVIDE(
+			    SUMX(fact_orders, fact_orders[discount] * fact_orders[sales]),
+			    [Total Revenue],
+			    0
+			)
+		formatString: 0.0%
+		displayFolder: 5 Discount
+		lineageTag: 097252bc-0328-42c8-b5de-cfa0eac14499
+
+	measure 'Selected Year Label' =
+			IF(
+			    HASONEVALUE(dim_date[Year]),
+			    "Year " & SELECTEDVALUE(dim_date[Year]),
+			    "All Years"
+			)
+		displayFolder: 7 Labels
+		lineageTag: e0cc2418-9511-4d86-a8a1-78c671a4e655
+
+	measure 'Revenue KPI Status' =
+			VAR Growth = [Revenue YoY %]
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        ISBLANK(Growth),  "—",
+			        Growth >= 0.1,    "▲ Strong Growth",
+			        Growth >= 0,      "▲ Growth",
+			        Growth >= -0.1,   "▼ Decline",
+			        "▼ Strong Decline"
+			    )
+		displayFolder: 7 Labels
+		lineageTag: 64139b32-1f9d-43cb-9300-e3add10e4827
+
+	measure 'Profit Margin Status' =
+			VAR Margin = [Profit Margin %]
+			RETURN
+			    SWITCH(
+			        TRUE(),
+			        Margin >= 0.20, "● Excellent",
+			        Margin >= 0.10, "● Good",
+			        Margin >= 0,    "● Low",
+			        "● Negative"
+			    )
+		displayFolder: 7 Labels
+		lineageTag: e94d8694-efe2-431a-a9b7-4e8b537a3d47
+
+	measure 'Dynamic Title' =
+			VAR SelectedYear =
+			    IF(HASONEVALUE(dim_date[Year]), FORMAT(SELECTEDVALUE(dim_date[Year]), "0"), "All Years")
+			VAR SelectedSegment =
+			    IF(HASONEVALUE(dim_customer[segment]), SELECTEDVALUE(dim_customer[segment]), "All Segments")
+			RETURN
+			    "Performance Overview · " & SelectedYear & " · " & SelectedSegment
+		displayFolder: 7 Labels
+		lineageTag: 3f1c8a70-5d42-4bd6-9a11-27c0f4e91b58
+
+	measure 'Discount Tier Label' =
+			IF(
+			    HASONEVALUE(fact_orders[discount_tier]),
+			    SELECTEDVALUE(fact_orders[discount_tier]),
+			    "All Discount Tiers"
+			)
+		displayFolder: 7 Labels
+		lineageTag: 8b24d1e6-0c93-4f57-bd8a-6e5f2a30c714
+
+	measure 'Simulated Revenue' =
+			SUMX(
+			    fact_orders,
+			    VAR OriginalDiscount = fact_orders[discount]
+			    VAR ReducedDiscount = MAX(0, OriginalDiscount - [Discount Reduction Value])
+			    VAR OriginalSales = fact_orders[sales]
+			    VAR SimulatedSales = OriginalSales * (1 + OriginalDiscount) / (1 + ReducedDiscount)
+			    RETURN SimulatedSales
+			)
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 6 What-If
+		lineageTag: cc3e5a21-978c-446a-a68e-1f5ea3251596
+
+	measure 'Revenue Uplift' = [Simulated Revenue] - [Total Revenue]
+		formatString: \$#,0;(\$#,0);\$#,0
+		displayFolder: 6 What-If
+		lineageTag: 18d2d596-04c8-46f4-9866-4280c32e129c
+
+	measure 'Simulated Profit Margin %' =
+			VAR SimulatedProfit =
+			    SUMX(
+			        fact_orders,
+			        VAR OriginalDiscount = fact_orders[discount]
+			        VAR ReducedDiscount = MAX(0, OriginalDiscount - [Discount Reduction Value])
+			        VAR OriginalSales = fact_orders[sales]
+			        VAR SimulatedSales = OriginalSales * (1 + OriginalDiscount) / (1 + ReducedDiscount)
+			        VAR MarginGain = (SimulatedSales - OriginalSales) * fact_orders[margin_pct]
+			        RETURN fact_orders[profit] + MarginGain
+			    )
+			RETURN DIVIDE(SimulatedProfit, [Simulated Revenue], 0)
+		formatString: 0.0%
+		displayFolder: 6 What-If
+		lineageTag: ac0f71ef-a3c7-4c82-9bd2-cd31a502e6b1
+
+	measure 'Diag Date Rows' = COUNTROWS(dim_date)
+		displayFolder: 0 Diagnostics
+		lineageTag: 5c1f9a02-77b4-4e18-9d3a-1b0e7c4a2f61
+
+	measure 'Diag Date Span' = FORMAT(MIN(dim_date[Date]), "yyyy-mm-dd") & "  ->  " & FORMAT(MAX(dim_date[Date]), "yyyy-mm-dd")
+		displayFolder: 0 Diagnostics
+		lineageTag: 9a7e3b15-2c68-4f0d-8b52-6d3f18ae7c40
+
+	measure 'Diag Revenue 2018 by Date' = CALCULATE([Total Revenue], dim_date[Year] = 2018)
+		formatString: #,0
+		displayFolder: 0 Diagnostics
+		lineageTag: 71d84c33-9f5a-4a72-b6c1-8e05d2f4a913
+
+	column order_id
+		dataType: string
+		lineageTag: a341902d-265d-423e-a450-e2ad002c1a28
+		summarizeBy: none
+		sourceColumn: order_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_date
+		dataType: dateTime
+		formatString: yyyy\-mm\-dd
+		lineageTag: c48e51f5-1b3e-4b3b-b5e9-e09bce7fecd1
+		summarizeBy: none
+		sourceColumn: order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ship_date
+		dataType: dateTime
+		formatString: yyyy\-mm\-dd
+		lineageTag: 724ee562-2dd0-4198-9187-bb7bc7f512e2
+		summarizeBy: none
+		sourceColumn: ship_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column ship_mode
+		dataType: string
+		lineageTag: a97a3c17-6acb-4ace-b93d-d5b253e881b5
+		summarizeBy: none
+		sourceColumn: ship_mode
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_id
+		dataType: string
+		isHidden
+		lineageTag: 0c10ccf8-2bfd-414c-afbe-ed921431f4ce
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_id
+		dataType: string
+		isHidden
+		lineageTag: 309645b2-4dfe-4984-9565-1048b948745b
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column geo_key
+		dataType: string
+		isHidden
+		lineageTag: 4fda0e31-75d4-4065-a949-27689828e026
+		summarizeBy: none
+		sourceColumn: geo_key
+
+		annotation SummarizationSetBy = Automatic
+
+	column sales
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 60dc3f97-4157-4f7a-923a-20d53350edf9
+		summarizeBy: none
+		sourceColumn: sales
+
+		annotation SummarizationSetBy = Automatic
+
+	column quantity
+		dataType: int64
+		formatString: #,0
+		lineageTag: c70a904c-8073-4bc3-a5e7-81e1d552fd64
+		summarizeBy: none
+		sourceColumn: quantity
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount
+		dataType: double
+		formatString: 0.0%
+		lineageTag: b70c63ab-ab87-45b1-9f3f-172c3f646dd0
+		summarizeBy: none
+		sourceColumn: discount
+
+		annotation SummarizationSetBy = Automatic
+
+	column profit
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: ea12b7a5-33e7-4204-8b49-d628fdfade35
+		summarizeBy: none
+		sourceColumn: profit
+
+		annotation SummarizationSetBy = Automatic
+
+	column days_to_ship
+		dataType: int64
+		formatString: 0
+		lineageTag: a056d011-01b4-4333-98ee-152ff7e2f49f
+		summarizeBy: none
+		sourceColumn: days_to_ship
+
+		annotation SummarizationSetBy = Automatic
+
+	column is_profitable
+		dataType: boolean
+		formatString: """TRUE"";;""FALSE"""
+		lineageTag: cc2eab44-1155-4976-80cd-049b694f47c7
+		summarizeBy: none
+		sourceColumn: is_profitable
+
+		annotation SummarizationSetBy = Automatic
+
+	column margin_pct
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 516b28ca-0cb7-4a08-9e4a-cb90529055b5
+		summarizeBy: none
+		sourceColumn: margin_pct
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount_tier
+		dataType: string
+		lineageTag: d4038a6a-5f7a-4023-903f-75d91e9595ce
+		summarizeBy: none
+		sourceColumn: discount_tier
+		sortByColumn: discount_tier_sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column discount_tier_sort
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 9b32c6b8-7195-4197-89de-612cbeb41756
+		summarizeBy: none
+		sourceColumn: discount_tier_sort
+
+		annotation SummarizationSetBy = Automatic
+
+	partition fact_orders = m
+		mode: import
+		source =
+				let
+				    Selected = Table.SelectColumns(src_superstore, {
+				        "Order ID", "Order Date", "Ship Date", "Ship Mode", "Customer ID",
+				        "Product ID", "Country", "State", "City", "Postal Code",
+				        "Sales", "Quantity", "Discount", "Profit"}),
+				    AddGeoKey = Table.AddColumn(Selected, "geo_key",
+				        each Text.Combine({[Country], [State], [City], [Postal Code]}, "|"), type text),
+				    AddDaysToShip = Table.AddColumn(AddGeoKey, "days_to_ship",
+				        each Duration.Days([Ship Date] - [Order Date]), Int64.Type),
+				    AddIsProfitable = Table.AddColumn(AddDaysToShip, "is_profitable",
+				        each [Profit] > 0, type logical),
+				    AddMarginPct = Table.AddColumn(AddIsProfitable, "margin_pct",
+				        each if [Sales] = 0 then 0 else [Profit] / [Sales], type number),
+				    AddDiscountTier = Table.AddColumn(AddMarginPct, "discount_tier",
+				        each if [Discount] = 0 then "No discount"
+				             else if [Discount] <= 0.1 then "1-10%"
+				             else if [Discount] <= 0.2 then "11-20%"
+				             else if [Discount] <= 0.3 then "21-30%"
+				             else "Over 30%", type text),
+				    AddDiscountTierSort = Table.AddColumn(AddDiscountTier, "discount_tier_sort",
+				        each if [Discount] = 0 then 0
+				             else if [Discount] <= 0.1 then 1
+				             else if [Discount] <= 0.2 then 2
+				             else if [Discount] <= 0.3 then 3
+				             else 4, Int64.Type),
+				    Renamed = Table.RenameColumns(AddDiscountTierSort, {
+				        {"Order ID", "order_id"}, {"Order Date", "order_date"}, {"Ship Date", "ship_date"},
+				        {"Ship Mode", "ship_mode"}, {"Customer ID", "customer_id"}, {"Product ID", "product_id"},
+				        {"Sales", "sales"}, {"Quantity", "quantity"}, {"Discount", "discount"}, {"Profit", "profit"}}),
+				    Final = Table.SelectColumns(Renamed, {
+				        "order_id", "order_date", "ship_date", "ship_mode", "customer_id", "product_id",
+				        "geo_key", "sales", "quantity", "discount", "profit",
+				        "days_to_ship", "is_profitable", "margin_pct", "discount_tier", "discount_tier_sort"})
+				in
+				    Final
+
+	annotation PBI_ResultType = Table
+

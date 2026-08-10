@@ -1,0 +1,87 @@
+table dim_product
+	lineageTag: c2510dbb-5c18-497f-aedf-9f3dd1592776
+
+	column product_id
+		dataType: string
+		lineageTag: 0907a859-fabf-44e2-a47b-0e56a0db0a43
+		summarizeBy: none
+		sourceColumn: product_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_name
+		dataType: string
+		lineageTag: f2dec77e-140f-4ef3-9410-d934d331a514
+		summarizeBy: none
+		sourceColumn: product_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column category
+		dataType: string
+		lineageTag: bac70f7c-15d2-4cad-9eda-798a20963344
+		summarizeBy: none
+		sourceColumn: category
+
+		annotation SummarizationSetBy = Automatic
+
+	column sub_category
+		dataType: string
+		lineageTag: b0ff7ea4-061a-437a-9aad-3f371bc9c9be
+		summarizeBy: none
+		sourceColumn: sub_category
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_revenue
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: f50de24b-d95b-415d-b884-51d6ab6b2302
+		summarizeBy: none
+		sourceColumn: total_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	column total_profit
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: a0b7c006-8dc3-4fa7-8b5e-da595a2bf064
+		summarizeBy: none
+		sourceColumn: total_profit
+
+		annotation SummarizationSetBy = Automatic
+
+	column product_margin_pct
+		dataType: double
+		formatString: 0.0%
+		lineageTag: afcf57ca-e734-4a30-8b14-add3f2764468
+		summarizeBy: none
+		sourceColumn: product_margin_pct
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_product = m
+		mode: import
+		source =
+				let
+				    Grouped = Table.Group(
+				        src_superstore,
+				        {"Product ID"},
+				        {
+				            {"product_name",  each List.First([Product Name]), type text},
+				            {"category",      each List.First([Category]), type text},
+				            // #"..." is required: a field name with a hyphen is not a valid
+				            // M identifier, so [Sub-Category] fails to parse.
+				            {"sub_category",  each List.First([#"Sub-Category"]), type text},
+				            {"total_revenue", each List.Sum([Sales]), type number},
+				            {"total_profit",  each List.Sum([Profit]), type number}
+				        }
+				    ),
+				    Renamed = Table.RenameColumns(Grouped, {{"Product ID", "product_id"}}),
+				    AddMargin = Table.AddColumn(Renamed, "product_margin_pct",
+				        each if [total_revenue] = 0 then 0 else [total_profit] / [total_revenue], type number)
+				in
+				    AddMargin
+
+	annotation PBI_ResultType = Table
+

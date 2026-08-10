@@ -1,0 +1,150 @@
+table dim_customer
+	lineageTag: cf665e7a-bf5e-448a-8a78-5d6dd323fec3
+
+	column customer_id
+		dataType: string
+		lineageTag: 40c45f78-af4d-495e-a436-bd858a471e35
+		summarizeBy: none
+		sourceColumn: customer_id
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_name
+		dataType: string
+		lineageTag: 9d72efba-6013-4e4c-b657-073d2953d63a
+		summarizeBy: none
+		sourceColumn: customer_name
+
+		annotation SummarizationSetBy = Automatic
+
+	column segment
+		dataType: string
+		lineageTag: bddd76dd-d080-4161-a2b2-d10bd37a9023
+		summarizeBy: none
+		sourceColumn: segment
+
+		annotation SummarizationSetBy = Automatic
+
+	column first_order_date
+		dataType: dateTime
+		formatString: yyyy\-mm\-dd
+		lineageTag: 86868ec0-8ff2-4ba8-987c-6e26ed07e410
+		summarizeBy: none
+		sourceColumn: first_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column last_order_date
+		dataType: dateTime
+		formatString: yyyy\-mm\-dd
+		lineageTag: b0df745c-26b9-40c7-aa81-f24817758acc
+		summarizeBy: none
+		sourceColumn: last_order_date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column lifetime_revenue
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: 899bd1fb-c8c9-4787-ab47-5a7780173e76
+		summarizeBy: none
+		sourceColumn: lifetime_revenue
+
+		annotation SummarizationSetBy = Automatic
+
+	column lifetime_profit
+		dataType: double
+		formatString: \$#,0;(\$#,0);\$#,0
+		lineageTag: f903e4ee-168f-46d3-bc6c-e9fa6f041510
+		summarizeBy: none
+		sourceColumn: lifetime_profit
+
+		annotation SummarizationSetBy = Automatic
+
+	column order_count
+		dataType: int64
+		formatString: 0
+		lineageTag: 142f8bd2-bdd2-42c0-ad20-0ebbaa1bf0fb
+		summarizeBy: none
+		sourceColumn: order_count
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_value_tier
+		dataType: string
+		lineageTag: 231fd7ad-5fc5-4684-92ee-ceb5b8b335a8
+		summarizeBy: none
+		sourceColumn: customer_value_tier
+		sortByColumn: customer_value_tier_sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column customer_value_tier_sort
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: eee28cc0-761e-4bb2-ac9f-407923a40812
+		summarizeBy: none
+		sourceColumn: customer_value_tier_sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column lifetime_margin_pct
+		dataType: double
+		formatString: 0.0%
+		lineageTag: 214291d7-ac67-4d51-a607-b4ad19810b52
+		summarizeBy: none
+		sourceColumn: lifetime_margin_pct
+
+		annotation SummarizationSetBy = Automatic
+
+	column tenure_days
+		dataType: int64
+		formatString: 0
+		lineageTag: 0cc95553-4d3c-4404-9296-954412a96520
+		summarizeBy: none
+		sourceColumn: tenure_days
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_customer = m
+		mode: import
+		source =
+				let
+				    Grouped = Table.Group(
+				        src_superstore,
+				        {"Customer ID"},
+				        {
+				            {"customer_name",     each List.First([Customer Name]), type text},
+				            {"segment",           each List.First([Segment]), type text},
+				            {"first_order_date",  each List.Min([Order Date]), type date},
+				            {"last_order_date",   each List.Max([Order Date]), type date},
+				            {"lifetime_revenue",  each List.Sum([Sales]), type number},
+				            {"lifetime_profit",   each List.Sum([Profit]), type number},
+				            {"order_count",       each List.Count(List.Distinct([Order ID])), Int64.Type}
+				        }
+				    ),
+				    Renamed = Table.RenameColumns(Grouped, {{"Customer ID", "customer_id"}}),
+				    // Thresholds are a business rule, written here so they are easy to see
+				    // and easy to change.
+				    AddTier = Table.AddColumn(Renamed, "customer_value_tier",
+				        each if [lifetime_revenue] >= 5000 then "High Value"
+				             else if [lifetime_revenue] >= 1500 then "Mid Value"
+				             else "Low Value", type text),
+				    AddTierSort = Table.AddColumn(AddTier, "customer_value_tier_sort",
+				        each if [customer_value_tier] = "High Value" then 1
+				             else if [customer_value_tier] = "Mid Value" then 2
+				             else 3, Int64.Type),
+				    AddMargin = Table.AddColumn(AddTierSort, "lifetime_margin_pct",
+				        each if [lifetime_revenue] = 0 then 0 else [lifetime_profit] / [lifetime_revenue], type number),
+				    AddTenure = Table.AddColumn(AddMargin, "tenure_days",
+				        each Duration.Days([last_order_date] - [first_order_date]), Int64.Type)
+				in
+				    AddTenure
+
+	annotation PBI_ResultType = Table
+

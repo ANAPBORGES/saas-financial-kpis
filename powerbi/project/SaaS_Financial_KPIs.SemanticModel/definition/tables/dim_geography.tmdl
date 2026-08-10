@@ -1,0 +1,73 @@
+table dim_geography
+	lineageTag: 892f4e5d-c670-436a-a305-526caf34f304
+
+	column country
+		dataType: string
+		lineageTag: 29a1d0e0-91c1-4513-afaf-00a63abd209a
+		dataCategory: Country
+		summarizeBy: none
+		sourceColumn: country
+
+		annotation SummarizationSetBy = Automatic
+
+	column region
+		dataType: string
+		lineageTag: 0512e0f3-e19a-470a-835f-109d94faec81
+		summarizeBy: none
+		sourceColumn: region
+
+		annotation SummarizationSetBy = Automatic
+
+	column state
+		dataType: string
+		lineageTag: 4a72cfd3-c938-4897-b750-fbe0df4e3db3
+		dataCategory: StateOrProvince
+		summarizeBy: none
+		sourceColumn: state
+
+		annotation SummarizationSetBy = Automatic
+
+	column city
+		dataType: string
+		lineageTag: f3082fd4-57f6-4dc6-895d-e8c228d4a9e9
+		dataCategory: City
+		summarizeBy: none
+		sourceColumn: city
+
+		annotation SummarizationSetBy = Automatic
+
+	column postal_code
+		dataType: string
+		lineageTag: 2a75df40-d6d3-4ab3-ad2e-93fc4e6f896f
+		dataCategory: PostalCode
+		summarizeBy: none
+		sourceColumn: postal_code
+
+		annotation SummarizationSetBy = Automatic
+
+	column geo_key
+		dataType: string
+		isHidden
+		lineageTag: 0f913058-36c1-41c6-9999-d1e43047571f
+		summarizeBy: none
+		sourceColumn: geo_key
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_geography = m
+		mode: import
+		source =
+				let
+				    Selected = Table.SelectColumns(src_superstore, {"Country", "Region", "State", "City", "Postal Code"}),
+				    Distinct = Table.Distinct(Selected),
+				    // Surrogate key built the same way in fact_orders, so the join is exact.
+				    AddKey = Table.AddColumn(Distinct, "geo_key",
+				        each Text.Combine({[Country], [State], [City], [Postal Code]}, "|"), type text),
+				    Renamed = Table.RenameColumns(AddKey, {
+				        {"Country", "country"}, {"Region", "region"},
+				        {"State", "state"}, {"City", "city"}, {"Postal Code", "postal_code"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table
+

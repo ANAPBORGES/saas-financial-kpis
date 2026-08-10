@@ -1,0 +1,115 @@
+table dim_date
+	lineageTag: 0b3fc9d0-a2ef-45d3-a75c-b6988f9e1a52
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: yyyy\-mm\-dd
+		lineageTag: 3f3b2773-f946-426b-981b-ce4cb1c2d73c
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: c6284e43-b2be-46f1-be09-fcd455764c9e
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 6dab3d9e-0a50-44d8-84e7-4ee7ce1d8816
+		summarizeBy: none
+		sourceColumn: Month Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: string
+		lineageTag: 583267da-da3f-4ed1-9e9b-a0e871349b4f
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: 'Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month'
+		dataType: string
+		lineageTag: aea47910-dffe-4ec1-af39-55c72c09fd12
+		summarizeBy: none
+		sourceColumn: Year Month
+		sortByColumn: 'Year Month Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 691a4308-a927-41fb-8fcf-8b45d9556e46
+		summarizeBy: none
+		sourceColumn: Year Month Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: ecc742bf-11ea-484b-92c2-409abdd80349
+		summarizeBy: none
+		sourceColumn: Quarter
+		sortByColumn: 'Quarter Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Quarter Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 64be4308-65cc-4de7-b7c0-7fbefa0c6e8f
+		summarizeBy: none
+		sourceColumn: Quarter Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Day of Week'
+		dataType: string
+		lineageTag: 40f8c671-27f8-4b53-8f14-e16bc45c642a
+		summarizeBy: none
+		sourceColumn: Day of Week
+
+		annotation SummarizationSetBy = Automatic
+
+	partition dim_date = m
+		mode: import
+		source =
+				let
+				    MinDate   = List.Min(src_superstore[Order Date]),
+				    MaxDate   = List.Max(src_superstore[Order Date]),   // pelo PEDIDO: 42 linhas de dez/2018 enviam em jan/2019 e criariam um ano vazio
+				    StartDate = if MinDate = null then #date(2015, 1, 1) else #date(Date.Year(MinDate), 1, 1),
+				    EndDate   = if MaxDate = null then #date(2018, 12, 31) else #date(Date.Year(MaxDate), 12, 31),
+				    DayCount  = Duration.Days(EndDate - StartDate) + 1,
+				    DateList  = List.Dates(StartDate, DayCount, #duration(1, 0, 0, 0)),
+				    ToTable   = Table.FromList(DateList, Splitter.SplitByNothing(), {"Date"}, null, ExtraValues.Error),
+				    TypedDate = Table.TransformColumnTypes(ToTable, {{"Date", type date}}),
+				    AddYear        = Table.AddColumn(TypedDate,      "Year",            each Date.Year([Date]), Int64.Type),
+				    AddMonthNo     = Table.AddColumn(AddYear,        "Month Number",    each Date.Month([Date]), Int64.Type),
+				    AddMonth       = Table.AddColumn(AddMonthNo,     "Month",           each Date.ToText([Date], "MMM", "en-US"), type text),
+				    AddYearMonth   = Table.AddColumn(AddMonth,       "Year Month",      each Date.ToText([Date], "yyyy-MM"), type text),
+				    AddYearMonthNo = Table.AddColumn(AddYearMonth,   "Year Month Sort", each Date.Year([Date]) * 100 + Date.Month([Date]), Int64.Type),
+				    AddQuarter     = Table.AddColumn(AddYearMonthNo, "Quarter",         each "Q" & Text.From(Date.QuarterOfYear([Date])), type text),
+				    AddQuarterNo   = Table.AddColumn(AddQuarter,     "Quarter Number",  each Date.QuarterOfYear([Date]), Int64.Type),
+				    AddDayOfWeek   = Table.AddColumn(AddQuarterNo,   "Day of Week",     each Date.ToText([Date], "ddd", "en-US"), type text)
+				in
+				    AddDayOfWeek
+
+	annotation PBI_ResultType = Table
+

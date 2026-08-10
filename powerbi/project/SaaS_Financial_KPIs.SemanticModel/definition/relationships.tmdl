@@ -1,0 +1,21 @@
+relationship rel_date_order
+	fromColumn: fact_orders.order_date
+	toColumn: dim_date.Date
+
+relationship rel_date_ship
+	isActive: false
+	fromColumn: fact_orders.ship_date
+	toColumn: dim_date.Date
+
+relationship rel_customer
+	fromColumn: fact_orders.customer_id
+	toColumn: dim_customer.customer_id
+
+relationship rel_product
+	fromColumn: fact_orders.product_id
+	toColumn: dim_product.product_id
+
+relationship rel_geography
+	fromColumn: fact_orders.geo_key
+	toColumn: dim_geography.geo_key
+

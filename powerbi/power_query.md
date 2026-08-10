@@ -86,14 +86,20 @@ unambiguously regardless of the machine's regional settings.
 ## 2 — `dim_date` (generated in M, not DAX)
 
 A calendar built from the data's own range, so it never needs manual editing.
-The upper bound is the last **ship** date, not the last order date — shipments run
-into the following year, and the inactive `ship_date` relationship would otherwise
-have dates with no matching row.
+
+The upper bound is the last **order** date, deliberately. Bounding it by the last
+*ship* date looks tidier — 42 December-2018 orders ship in January 2019, and the
+inactive `ship_date` relationship then has no unmatched dates — but it extends the
+calendar to 2019-12-31 and creates a **whole year with no sales**. That year then
+becomes the last date in the model, and every measure anchored on the end of the
+calendar silently returns blank, while `Year` slicers offer a value that empties the
+report. A phantom year in every date filter costs more than 42 unmatched ship dates
+on a relationship nothing activates.
 
 ```m
 let
     MinDate    = List.Min(src_superstore[Order Date]),
-    MaxDate    = List.Max(src_superstore[Ship Date]),
+    MaxDate    = List.Max(src_superstore[Order Date]),
     StartDate  = #date(Date.Year(MinDate), 1, 1),
     EndDate    = #date(Date.Year(MaxDate), 12, 31),
     DayCount   = Duration.Days(EndDate - StartDate) + 1,

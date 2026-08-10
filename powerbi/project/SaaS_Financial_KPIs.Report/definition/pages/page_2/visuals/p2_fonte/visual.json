@@ -1,0 +1,47 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/fabric/item/report/definition/visualContainer/2.11.0/schema.json",
+  "name": "p2_fonte",
+  "position": {
+    "x": 16,
+    "y": 686,
+    "z": 2000,
+    "height": 30,
+    "width": 1248,
+    "tabOrder": 5000
+  },
+  "visual": {
+    "visualType": "textbox",
+    "objects": {
+      "general": [
+        {
+          "properties": {
+            "paragraphs": [
+              {
+                "textRuns": [
+                  {
+                    "value": "2018 is the last year in the data: growth and retention read short in the boundary year.",
+                    "textStyle": {
+                      "fontSize": "8pt",
+                      "color": "#8A8A8A"
+                    }
+                  }
+                ]
+              },
+              {
+                "textRuns": [
+                  {
+                    "value": "Source: Sample Superstore - 9,994 order lines, 2015-2018, US$2,297,201 in sales  |  portfolio demonstration, not a production report",
+                    "textStyle": {
+                      "fontSize": "8pt",
+                      "color": "#8A8A8A"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

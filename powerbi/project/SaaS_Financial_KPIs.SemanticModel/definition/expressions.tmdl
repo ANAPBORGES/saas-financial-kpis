@@ -1,0 +1,41 @@
+expression p_DataPath = "C:\\Users\\apdar\\github-portfolio\\saas-financial-kpis\\data\\superstore.csv" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: ba0d53a3-aa4d-4719-a050-620c01f061a5
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+
+expression src_superstore =
+		let
+		    Source = Csv.Document(
+		        File.Contents(p_DataPath),
+		        [Delimiter = ",", Columns = 21, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]
+		    ),
+		    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+		    // Types pinned to en-US: the CSV uses ISO dates and a dot decimal
+		    // separator, which a pt-BR locale would otherwise misread.
+		    Typed = Table.TransformColumnTypes(
+		        Promoted,
+		        {
+		            {"Row ID", Int64.Type}, {"Order ID", type text},
+		            {"Order Date", type date}, {"Ship Date", type date},
+		            {"Ship Mode", type text}, {"Customer ID", type text},
+		            {"Customer Name", type text}, {"Segment", type text},
+		            {"Country", type text}, {"City", type text},
+		            {"State", type text}, {"Postal Code", type text},
+		            {"Region", type text}, {"Product ID", type text},
+		            {"Category", type text}, {"Sub-Category", type text},
+		            {"Product Name", type text}, {"Sales", type number},
+		            {"Quantity", Int64.Type}, {"Discount", type number},
+		            {"Profit", type number}
+		        },
+		        "en-US"
+		    ),
+		    // Loaded into memory once - five downstream queries read this.
+		    Buffered = Table.Buffer(Typed)
+		in
+		    Buffered
+	lineageTag: ef45c4aa-8a71-4315-9dad-2a624f1c2ab3
+
+	annotation PBI_ResultType = Table
+

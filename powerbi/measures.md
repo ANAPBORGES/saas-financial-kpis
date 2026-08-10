@@ -40,66 +40,111 @@ Avg Discount = AVERAGE(fact_orders[discount])
 
 ## Group 2 — Time Intelligence
 
-All time intelligence measures require the active relationship between `fact_orders[order_date]` and `dim_date[Date]`.
+All of these anchor on **`MAX(fact_orders[order_date])`** — the last date on which a sale
+actually happened — never on the end of the date table. And none of them use `DATESYTD`,
+`SAMEPERIODLASTYEAR` or `DATESINPERIOD`. Both choices were paid for:
+
+- **Anchoring on the calendar's last date is a trap.** The calendar covers whole years, so
+  its last date sits in December of the final year even when the data stops earlier. Get
+  the calendar's upper bound wrong by one year and every measure here returns blank while
+  the *prior year* measure still returns a number — which surfaces as a KPI reading exactly
+  **−100%**, not as an error.
+- **The time-intelligence functions need a marked date table and a contiguous date
+  selection.** When either condition fails they raise an error, and with
+  `returnErrorValuesAsNull` set on the model that error arrives as a silent blank. Explicit
+  date arithmetic has no such preconditions.
 
 ```dax
--- YoY with VAR, SAMEPERIODLASTYEAR, ISBLANK guard
-Revenue YoY % =
-VAR CurrentRevenue = [Total Revenue]
-VAR PriorRevenue =
-    CALCULATE(
-        [Total Revenue],
-        SAMEPERIODLASTYEAR(dim_date[Date])
-    )
+-- Revenue in the year of the last sale, up to that date
+Revenue YTD =
+VAR LastDay = MAX(fact_orders[order_date])
+VAR YearStart = DATE(YEAR(LastDay), 1, 1)
 RETURN
     IF(
-        ISBLANK(PriorRevenue) || PriorRevenue = 0,
+        ISBLANK(LastDay),
         BLANK(),
-        DIVIDE(CurrentRevenue - PriorRevenue, PriorRevenue)
+        CALCULATE(
+            [Total Revenue],
+            FILTER(ALL(dim_date), dim_date[Date] >= YearStart && dim_date[Date] <= LastDay)
+        )
     )
 
--- Absolute YoY difference
-Revenue YoY Abs =
-VAR PriorRevenue =
-    CALCULATE(
-        [Total Revenue],
-        SAMEPERIODLASTYEAR(dim_date[Date])
-    )
-RETURN [Total Revenue] - PriorRevenue
-
--- Rolling 3-month window using DATESINPERIOD
-Revenue Rolling 3M =
-CALCULATE(
-    [Total Revenue],
-    DATESINPERIOD(
-        dim_date[Date],
-        LASTDATE(dim_date[Date]),
-        -3,
-        MONTH
-    )
-)
-
--- Year-to-date cumulative revenue
-Revenue YTD =
-CALCULATE(
-    [Total Revenue],
-    DATESYTD(dim_date[Date])
-)
-
--- Prior year YTD for comparison
+-- The same window one year earlier, so the comparison is like for like
 Revenue YTD Prior Year =
-CALCULATE(
-    [Revenue YTD],
-    SAMEPERIODLASTYEAR(dim_date[Date])
-)
+VAR LastDay = MAX(fact_orders[order_date])
+VAR PriorStart = DATE(YEAR(LastDay) - 1, 1, 1)
+VAR PriorEnd = DATE(YEAR(LastDay) - 1, MONTH(LastDay), DAY(LastDay))
+RETURN
+    IF(
+        ISBLANK(LastDay),
+        BLANK(),
+        CALCULATE(
+            [Total Revenue],
+            FILTER(ALL(dim_date), dim_date[Date] >= PriorStart && dim_date[Date] <= PriorEnd)
+        )
+    )
 
--- YTD vs prior YTD percentage
 Revenue YTD vs PY % =
-DIVIDE(
-    [Revenue YTD] - [Revenue YTD Prior Year],
-    [Revenue YTD Prior Year],
-    BLANK()
-)
+DIVIDE([Revenue YTD] - [Revenue YTD Prior Year], [Revenue YTD Prior Year], BLANK())
+
+-- Trailing three months. The window is expressed as the integer YYYYMM the date table
+-- already carries: DATE(year, month - 2, 1) is an error in January and February, and one
+-- errored month is enough to break the whole visual.
+Revenue Rolling 3M =
+VAR LastDay = MAX(fact_orders[order_date])
+VAR Y = YEAR(LastDay)
+VAR M = MONTH(LastDay)
+VAR StartYM = IF(M >= 3, Y * 100 + M - 2, (Y - 1) * 100 + M + 10)
+RETURN
+    IF(
+        ISBLANK(LastDay),
+        BLANK(),
+        CALCULATE(
+            [Total Revenue],
+            FILTER(
+                ALL(dim_date),
+                dim_date[Year Month Sort] >= StartYM && dim_date[Date] <= LastDay
+            )
+        )
+    )
+
+-- Year over year, compared on the Year column rather than a shifted date range.
+-- Blank on the first year is correct: there is nothing to compare against.
+Revenue YoY % =
+VAR Y = YEAR(MAX(fact_orders[order_date]))
+VAR Cur = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y))
+VAR Prev = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y - 1))
+RETURN
+    IF(ISBLANK(Prev) || Prev = 0, BLANK(), DIVIDE(Cur - Prev, Prev))
+
+Revenue YoY Abs =
+VAR Y = YEAR(MAX(fact_orders[order_date]))
+VAR Cur = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y))
+VAR Prev = CALCULATE([Total Revenue], FILTER(ALL(dim_date), dim_date[Year] = Y - 1))
+RETURN Cur - Prev
+```
+
+Verified against the source file: `Revenue YTD` = US$733,215 (2018), `Revenue YTD vs PY %`
+= +20.5% against US$608,474 through 2017-12-30, `Revenue Rolling 3M` = US$280,054
+(Oct–Dec 2018), and yearly growth of −2.8%, +29.5%, +20.4%.
+
+---
+
+## Group 0 — Model health checks
+
+Three measures that exist to answer "is the model wired up?" without opening a query
+window. They earned their place while debugging a date table that silently overshot into
+an empty year.
+
+```dax
+Diag Date Rows = COUNTROWS(dim_date)
+
+Diag Date Span =
+FORMAT(MIN(dim_date[Date]), "yyyy-mm-dd") & "  ->  " & FORMAT(MAX(dim_date[Date]), "yyyy-mm-dd")
+
+-- If this returns the grand total instead of 2018's revenue, the date relationship is
+-- not propagating; if it returns blank, no rows match between the two tables.
+Diag Revenue 2018 by Date = CALCULATE([Total Revenue], dim_date[Year] = 2018)
 ```
 
 ---
@@ -216,16 +261,25 @@ AVERAGEX(
     CALCULATE(MAX(fact_orders[days_to_ship]))
 )
 
--- Customers whose first order falls within the selected period
+-- Customers whose first order falls within the selected period.
+-- The period boundaries are captured in VARs first: read inside FILTER they would be
+-- evaluated in the row context of dim_customer, which is not the same question.
 New Customers =
-CALCULATE(
-    DISTINCTCOUNT(dim_customer[customer_id]),
-    FILTER(
-        dim_customer,
-        dim_customer[first_order_date] >= MIN(dim_date[Date]) &&
-        dim_customer[first_order_date] <= MAX(dim_date[Date])
+VAR PeriodStart = MIN(dim_date[Date])
+VAR PeriodEnd = MAX(dim_date[Date])
+RETURN
+    IF(
+        ISBLANK(PeriodStart) || ISBLANK(PeriodEnd),
+        BLANK(),
+        CALCULATE(
+            DISTINCTCOUNT(dim_customer[customer_id]),
+            FILTER(
+                ALLSELECTED(dim_customer),
+                dim_customer[first_order_date] >= PeriodStart
+                    && dim_customer[first_order_date] <= PeriodEnd
+            )
+        )
     )
-)
 
 -- New customers as % of total
 New Customers % =
