@@ -1,5 +1,5 @@
 # SaaS Financial KPIs 💰
-> Financial analysis of a retail dataset applying SaaS-style metrics — MRR, churn & retention, customer value, discount impact, and segment performance — delivered as a **Power BI dashboard with DAX**, backed by BigQuery SQL. The data ships **inside this repo** (`data/superstore.csv`), so it is reproducible with no external setup.
+> Financial analysis of a retail dataset applying SaaS-style metrics — MRR, churn & retention, customer value, discount impact, and segment performance — delivered as a **six-page Power BI report with DAX**, backed by BigQuery SQL. The data ships **inside this repo** (`data/superstore.csv`), so it is reproducible with no external setup.
 
 [![Power BI](https://img.shields.io/badge/Power%20BI-DAX%20·%20Power%20Query-F2C811?style=flat&logo=powerbi&logoColor=black)](./powerbi/measures.md)
 [![SQL](https://img.shields.io/badge/SQL-BigQuery%20(8%20queries)-4285F4?style=flat&logo=google-cloud)](./sql)
@@ -14,7 +14,7 @@
 **Stakeholders:** Finance, Commercial, and C-level teams
 **Business question:** *How does revenue evolve over time, which customers and segments drive the most value, and where is profitability being eroded by discounting?*
 
-This project analyzes **4 years of sales** from the classic Superstore dataset (2015–2018), applying SaaS financial metrics to a retail context. Beyond MRR and churn, it deep-dives into **discount impact on profitability**, customer value tiers, sub-category Pareto, and regional efficiency — insights that support revenue planning, pricing, and retention decisions. The metrics were prototyped in **BigQuery SQL** and delivered as a **Power BI** dashboard with DAX time-intelligence.
+This project analyzes **4 years of sales** from the classic Superstore dataset (2015–2018), applying SaaS financial metrics to a retail context. Beyond MRR and churn, it deep-dives into **discount impact on profitability**, customer value tiers, sub-category Pareto, and regional efficiency — insights that support revenue planning, pricing, and retention decisions. The metrics were prototyped in **BigQuery SQL** and delivered as a **Power BI** report with DAX time-intelligence. MRR and churn live in the SQL layer, which is where the cohort logic belongs; the report is organised around the decisions a manager makes - growth, accounts, product lines and pricing.
 
 ---
 
@@ -54,7 +54,8 @@ data/superstore.csv   (versioned in this repo — single source of truth)
         │
         ├────────────► Power BI Desktop  (Get Data ▸ Text/CSV)
         │                 Power Query (M) cleanup → data model → DAX measures
-        │                 4 pages: Home · MRR · Churn · Segments
+        │                 6 pages: Home · Executive Summary · Revenue & Growth
+        │                          Customers · Products · Discount Impact
         │
         └────────────► BigQuery table `superstore.orders`  (optional, for the SQL)
                           8 analytical queries prototyping the metrics
@@ -102,26 +103,31 @@ The **Power BI dashboard** is the primary deliverable; the **SQL** folder docume
 
 ## 📊 Dashboard
 
-**Tool:** Power BI Desktop · 4 pages · DAX time-intelligence · Power Query (M)
+**Tool:** Power BI Desktop · 6 pages · DAX time-intelligence · Power Query (M)
 
-> **Status: model complete, visuals in progress.** The semantic model ships as a [**Power BI Project**](./powerbi/project/) — open `SaaS_Financial_KPIs.pbip` in Desktop, point the `p_DataPath` parameter at the CSV, and the star schema, the Power Query transformations and all 40 DAX measures are built. Report pages are created and named; visuals are being placed. Every number below is reproducible from the SQL in [`/sql`](./sql).
+> **Status: built.** The report ships as a [**Power BI Project**](./powerbi/project/) — open `SaaS_Financial_KPIs.pbip` in Desktop, point the `p_DataPath` parameter at the CSV, and you get the star schema, the Power Query transformations, 44 DAX measures and six pages of visuals with page navigation. Every number below is reproducible from the SQL in [`/sql`](./sql).
 
-| Page | Description |
+| Page | What it answers |
 |---|---|
-| **Home** | Summary navigation with key metrics |
-| **MRR** | Monthly revenue + 3M rolling avg · active customers · profit margin evolution |
-| **Churn** | Yearly retention vs churn · cohort area chart · retained vs churned breakdown |
-| **Segments** | Revenue and profit by segment and region · YoY growth comparison |
+| **Home** | cover and navigation to the five analysis pages |
+| **Executive Summary** | how much, where and why — revenue, profit, margin, orders, average order value, revenue by month and by region, and growth year over year |
+| **Revenue & Growth** | year to date against the prior year, the 3-month trend, revenue against profit, and margin over time |
+| **Customers** | value per customer, how the base splits by value tier, new customers by year, margin by segment × region, and every account ranked with its margin |
+| **Products** | where margin is lost by product line, product by product, discount against margin by sub-category, and each sub-category's weight inside its own category |
+| **Discount Impact** | loss rate and revenue by discount band, revenue given up to discounting, and a what-if slider that simulates cutting discount |
 
-**Previews:**
+Every page carries a header with navigation and a footer declaring source, period and scope.
+Measure definitions are in [`powerbi/measures.md`](./powerbi/measures.md); the time-intelligence
+group documents why it uses explicit date arithmetic instead of `DATESYTD`.
 
-| Home | MRR |
+**Layout:**
+
+| Home page | Page header (current tab highlighted) |
 |---|---|
-| ![Home](./assets/Home.png) | ![MRR](./assets/MRR.png) |
+| ![Home page](./assets/home_page.png) | ![Header](./assets/header_3_customers.png) |
 
-| Churn | Segments |
-|---|---|
-| ![Churn](./assets/Churn.png) | ![Segments](./assets/Segments.png) |
+> These are the layout designs, not screenshots of the report with data — those come next.
+> The five header images and the cover are also embedded inside the report definition.
 
 ---
 
@@ -148,7 +154,7 @@ saas-financial-kpis/
 ├── powerbi/
 │   ├── measures.md                  ← DAX measures
 │   └── data_model.md                ← model, Power Query, visuals
-├── assets/                          ← dashboard screenshots
+├── assets/                          ← layout designs (cover + page headers)
 └── README.md
 ```
 

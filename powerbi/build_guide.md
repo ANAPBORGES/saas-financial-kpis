@@ -60,63 +60,28 @@ fix them now — every visual inherits the error otherwise.
 
 ---
 
-## Step 5 — Lay out the four pages
+## Step 5 — The pages, as built
 
-Keep the existing four-page structure (Home · MRR · Churn · Segments). The visual
-recipes below name the measure and dimension for each — all measures exist in
-`measures.md`.
+The report has six pages. This is what each one carries; the measures are all in
+[`measures.md`](./measures.md).
 
-### Shared elements (every analysis page)
+| Page | Visuals |
+|---|---|
+| **Home** | cover image with five navigation buttons |
+| **Executive Summary** | five KPI cards (revenue, profit, margin, orders, average order value) · revenue by month · revenue by region · revenue and margin by category · growth year over year with the YoY line · four slicers |
+| **Revenue & Growth** | year-to-date and prior-year cards, the 3-month figure and the growth reading · monthly revenue with the 3-month trend · revenue by year · revenue against profit · margin over time |
+| **Customers** | value-per-customer cards · revenue by segment · the base by value tier · new customers by year · margin by segment × region · every account ranked with its margin |
+| **Products** | margin by product line (matrix) · product by product (table) · discount against margin by sub-category (scatter) · weight inside the category |
+| **Discount Impact** | the what-if slider · revenue given up to discount, simulated gain, simulated margin and weighted discount · loss rate and revenue by discount band · revenue given up by line and by region |
 
-- A top strip of **KPI cards** driven by `[Total Revenue]`, `[Total Profit]`,
-  `[Profit Margin %]`, `[Total Orders]`.
-- A **dynamic title** text box bound to `[Dynamic Title]`.
-- The slicer panel from Step 6.
+Shared on every analysis page: a header image with navigation, and a footer declaring
+source, period and scope.
 
-### MRR page
-
-| Visual | Type | X / Axis | Values |
-|---|---|---|---|
-| Monthly revenue | Line | `dim_date[Year Month]` | `[Total Revenue]`, `[Revenue Rolling 3M]` |
-| Revenue by year | Column | `dim_date[Year]` | `[Total Revenue]` |
-| Revenue vs profit | Line | `dim_date[Year Month]` | `[Total Revenue]`, `[Total Profit]` |
-| Active customers / month | Line | `dim_date[Year Month]` | `[Total Customers]` |
-| Margin % / month | Line | `dim_date[Year Month]` | `[Profit Margin %]` |
-| YoY status | Card | — | `[Revenue KPI Status]` |
-
-### Churn page
-
-| Visual | Type | Axis | Values |
-|---|---|---|---|
-| Retention % by year | Line | `dim_date[Year]` | retention measure |
-| Retained vs churned | Clustered column | `dim_date[Year]` | retained, churned |
-| Retention vs churn | Donut | — | retained, churned split |
-| Customers by year | Area | `dim_date[Year]` | `[Total Customers]` |
-
-> Add a note visual repeating the 2018 boundary-year caveat from `data_model.md`.
-
-### Segments page
-
-| Visual | Type | Axis | Values |
-|---|---|---|---|
-| Revenue by segment | Bar | `dim_customer[segment]` | `[Total Revenue]` |
-| Revenue by region | Bar | `dim_geography[region]` | `[Total Revenue]` |
-| Revenue by segment & year | Clustered column | `dim_date[Year]`, legend `segment` | `[Total Revenue]` |
-| Profit by segment | Donut | `dim_customer[segment]` | `[Total Profit]` |
-| Segment share | Card row | — | `[Revenue % of Total]` |
-
-### Optional new page — Discount Impact (showcases the what-if)
-
-| Visual | Type | Axis | Values |
-|---|---|---|---|
-| Loss rate by discount tier | Column | `fact_orders[discount_tier]` | `[Loss-Making Orders %]` |
-| Revenue by discount tier | Column | `fact_orders[discount_tier]` | `[Total Revenue]` |
-| `Discount Reduction` slider | Slicer (the what-if) | — | — |
-| Simulated uplift | Card | — | `[Revenue Uplift]`, `[Simulated Profit Margin %]` |
-
-This page is where the what-if parameter earns its place — drag the slider and the
-simulated cards recalculate live. It directly visualises the SQL finding that
-orders over 30% discount are 83% loss-making.
+**Two notes worth carrying into any build of this kind.** A KPI card whose measure resolves
+against the *end of the date table* reads blank the moment the calendar overshoots the data —
+see the time-intelligence group in `measures.md`. And a "new customers" card with no year
+selected is always 100% of the base; as a chart by year it tells the actual story, which here
+is that acquisition fell from 595 in 2015 to 11 in 2018.
 
 ---
 
