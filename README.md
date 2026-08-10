@@ -120,14 +120,19 @@ Every page carries a header with navigation and a footer declaring source, perio
 Measure definitions are in [`powerbi/measures.md`](./powerbi/measures.md); the time-intelligence
 group documents why it uses explicit date arithmetic instead of `DATESYTD`.
 
-**Layout:**
+**The report:**
 
-| Home page | Page header (current tab highlighted) |
+| Home | Executive Summary |
 |---|---|
-| ![Home page](./assets/home_page.png) | ![Header](./assets/header_3_customers.png) |
+| ![Home](./assets/01_home.png) | ![Executive Summary](./assets/02_executive_summary.png) |
 
-> These are the layout designs, not screenshots of the report with data — those come next.
-> The five header images and the cover are also embedded inside the report definition.
+| Revenue & Growth | Customers |
+|---|---|
+| ![Revenue and Growth](./assets/03_revenue_growth.png) | ![Customers](./assets/04_customers.png) |
+
+| Products | Discount Impact |
+|---|---|
+| ![Products](./assets/05_products.png) | ![Discount Impact](./assets/06_discount_impact.png) |
 
 ---
 
@@ -154,7 +159,7 @@ saas-financial-kpis/
 ├── powerbi/
 │   ├── measures.md                  ← DAX measures
 │   └── data_model.md                ← model, Power Query, visuals
-├── assets/                          ← layout designs (cover + page headers)
+├── assets/                          ← the six report pages
 └── README.md
 ```
 
