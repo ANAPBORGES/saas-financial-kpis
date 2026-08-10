@@ -165,6 +165,15 @@ saas-financial-kpis/
 
 ---
 
+## Companion project
+
+The same dataset seen through Tableau's strengths — filled profit maps, a sub-category
+Pareto and a discount scatter: **[Executive Sales & Profitability](https://github.com/ANAPBORGES/tableau-sales-profitability-dashboard)**,
+[live on Tableau Public](https://public.tableau.com/app/profile/ana.paula.araujo.borges/viz/PortiflioTableau/Home). Metric names match this project field for field, so the two
+read as one portfolio.
+
+---
+
 ## 👩‍💻 About
 
 Built by **Ana Paula Borges** · [LinkedIn](https://linkedin.com/in/ana-paula-d-araújo-borges) · [GitHub](https://github.com/ANAPBORGES)
